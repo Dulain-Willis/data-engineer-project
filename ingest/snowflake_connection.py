@@ -16,3 +16,8 @@ def get_snowflake_connection():
         role=os.getenv("SNOWFLAKE_ROLE", "ACCOUNTADMIN")
     )
     return conn
+
+if __name__ == "__main__":
+    conn = get_snowflake_connection()
+    print("✅ Connected successfully!")
+    conn.close()
