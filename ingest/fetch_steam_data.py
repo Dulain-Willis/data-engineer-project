@@ -1,6 +1,6 @@
-
 import requests
 import time
+import json
 from snowflake_connection import get_snowflake_connection
 
 def get_app_list():
@@ -28,6 +28,13 @@ def insert_game(conn, game):
     release_date = game.get("release_date", {}).get("date", "")
     developer = game.get("developers", [""])[0]
     publisher = game.get("publishers", [""])[0]
+    genres = ", ".join([g.get("description", "") for g in game.get("genres", [])])
+    categories = ", ".join([c.get("description", "") for c in game.get("categories", [])])
+    platforms = json.dumps(game.get("platforms", {}))
+    metacritic_score = game.get("metacritic", {}).get("score", None)
+    recommendations = game.get("recommendations", {}).get("total", None)
+    short_description = game.get("short_description", "")
+    languages = game.get("supported_languages", "")
 
     cursor = conn.cursor()
     cursor.execute("""
@@ -38,20 +45,28 @@ def insert_game(conn, game):
             price FLOAT,
             release_date STRING,
             developer STRING,
-            publisher STRING
+            publisher STRING,
+            genres STRING,
+            categories STRING,
+            platforms STRING,
+            metacritic_score INT,
+            recommendations INT,
+            short_description STRING,
+            languages STRING
         )
     """)
     cursor.execute("""
-        INSERT INTO raw_games (appid, name, is_free, price, release_date, developer, publisher)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO raw_games (
+            appid, name, is_free, price, release_date,
+            developer, publisher, genres, categories,
+            platforms, metacritic_score, recommendations,
+            short_description, languages
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (
-        game["steam_appid"],
-        name,
-        is_free,
-        price,
-        release_date,
-        developer,
-        publisher
+        game["steam_appid"], name, is_free, price, release_date,
+        developer, publisher, genres, categories, platforms,
+        metacritic_score, recommendations, short_description, languages
     ))
     cursor.close()
 
@@ -59,13 +74,13 @@ def main():
     conn = get_snowflake_connection()
     apps = get_app_list()
 
-    for app in apps[:200]:  # adjust range for testing
+    for app in apps[:200]:  # adjust limit for testing/production
         appid = app["appid"]
         game = fetch_game_details(appid)
         if game:
             insert_game(conn, game)
             print(f"Inserted: {game['name']}")
-        time.sleep(0.25)  # avoid rate limits
+        time.sleep(0.25)  # rate-limit friendly
 
     conn.close()
 
