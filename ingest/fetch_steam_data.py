@@ -39,7 +39,7 @@ def insert_game(conn, game):
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS raw_games (
-            appid INT,
+            appid INT PRIMARY KEY,
             name STRING,
             is_free BOOLEAN,
             price FLOAT,
