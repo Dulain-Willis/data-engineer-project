@@ -3,7 +3,8 @@ import time
 import json
 from datetime import datetime
 from airflow.decorators import dag, task
-from include.snowflake_connection import get_snowflake_connection
+from project_include.snowflake_connection import get_snowflake_connection
+
 
 default_args = {
     "owner": "Dulain",
