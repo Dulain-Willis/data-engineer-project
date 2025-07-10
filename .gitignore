@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 .dg_env/
+.astro/
