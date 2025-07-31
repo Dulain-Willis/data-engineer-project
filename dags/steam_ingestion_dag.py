@@ -5,7 +5,6 @@ from datetime import datetime
 from airflow.decorators import dag, task
 from project_include.snowflake_connection import get_snowflake_connection
 
-
 default_args = {
     "owner": "Dulain",
     "retries": 1,
@@ -23,6 +22,7 @@ def steam_ingestion():
 
     @task()
     def get_app_list():
+        """Fetch the Steam app list and limit for dev"""
         url = "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
         response = requests.get(url)
         response.raise_for_status()
@@ -30,6 +30,7 @@ def steam_ingestion():
 
     @task()
     def fetch_game_details(apps):
+        """Fetch details for each Steam app in the list"""
         def fetch(appid):
             url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
             try:
@@ -48,13 +49,16 @@ def steam_ingestion():
             if details:
                 results.append(details)
                 print(f"✔ Insertable: {details['name']}")
-            time.sleep(1.5)
+            time.sleep(1.5)  # Slow down to avoid rate limiting
         return results
 
     @task()
     def load_into_snowflake(games):
+        """Upsert game data into Snowflake raw_games table"""
         conn = get_snowflake_connection()
         cursor = conn.cursor()
+
+        # Create table if not exists
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS raw_games (
                 appid INT PRIMARY KEY,
@@ -74,6 +78,39 @@ def steam_ingestion():
             )
         """)
 
+        # Upsert each game
+        merge_sql = """
+            MERGE INTO raw_games AS target
+            USING (SELECT ? AS appid, ? AS name, ? AS is_free, ? AS price, ? AS release_date,
+                          ? AS developer, ? AS publisher, ? AS genres, ? AS categories,
+                          ? AS platforms, ? AS metacritic_score, ? AS recommendations,
+                          ? AS short_description, ? AS languages) AS source
+            ON target.appid = source.appid
+            WHEN MATCHED THEN UPDATE SET
+                name = source.name,
+                is_free = source.is_free,
+                price = source.price,
+                release_date = source.release_date,
+                developer = source.developer,
+                publisher = source.publisher,
+                genres = source.genres,
+                categories = source.categories,
+                platforms = source.platforms,
+                metacritic_score = source.metacritic_score,
+                recommendations = source.recommendations,
+                short_description = source.short_description,
+                languages = source.languages
+            WHEN NOT MATCHED THEN
+                INSERT (appid, name, is_free, price, release_date,
+                        developer, publisher, genres, categories,
+                        platforms, metacritic_score, recommendations,
+                        short_description, languages)
+                VALUES (source.appid, source.name, source.is_free, source.price, source.release_date,
+                        source.developer, source.publisher, source.genres, source.categories,
+                        source.platforms, source.metacritic_score, source.recommendations,
+                        source.short_description, source.languages)
+        """
+
         for game in games:
             name = game.get("name", "")
             is_free = game.get("is_free", False)
@@ -89,19 +126,12 @@ def steam_ingestion():
             short_description = game.get("short_description", "")
             languages = game.get("supported_languages", "")
 
-            cursor.execute("""
-                INSERT INTO raw_games (
-                    appid, name, is_free, price, release_date,
-                    developer, publisher, genres, categories,
-                    platforms, metacritic_score, recommendations,
-                    short_description, languages
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
+            cursor.execute(merge_sql, (
                 game["steam_appid"], name, is_free, price, release_date,
                 developer, publisher, genres, categories, platforms,
                 metacritic_score, recommendations, short_description, languages
             ))
+
         cursor.close()
         conn.close()
 
