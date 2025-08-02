@@ -1,5 +1,14 @@
+# Python
 .env
 __pycache__/
 *.pyc
 .dg_env/
+
+# astro
 .astro/
+
+# dbt
+dbt.log
+logs/
+target/
+dbt_packages/
