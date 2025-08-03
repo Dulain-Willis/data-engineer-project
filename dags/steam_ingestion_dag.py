@@ -13,7 +13,7 @@ default_args = {
 @dag(
     dag_id="steam_ingestion_dag",
     start_date=datetime(2025, 7, 1),
-    schedule=None,  # Set cron string here if you want to schedule later
+    schedule=None,  # Add cron if you want to schedule later
     catchup=False,
     default_args=default_args,
     tags=["steam", "ingestion"],
@@ -49,7 +49,7 @@ def steam_ingestion():
             if details:
                 results.append(details)
                 print(f"✔ Insertable: {details['name']}")
-            time.sleep(1.5)  # Slow down to avoid rate limiting
+            time.sleep(1.5)  # Avoid rate limiting
         return results
 
     @task()
@@ -78,59 +78,63 @@ def steam_ingestion():
             )
         """)
 
-        # Upsert each game
-        merge_sql = """
-            MERGE INTO raw_games AS target
-            USING (SELECT ? AS appid, ? AS name, ? AS is_free, ? AS price, ? AS release_date,
-                          ? AS developer, ? AS publisher, ? AS genres, ? AS categories,
-                          ? AS platforms, ? AS metacritic_score, ? AS recommendations,
-                          ? AS short_description, ? AS languages) AS source
-            ON target.appid = source.appid
-            WHEN MATCHED THEN UPDATE SET
-                name = source.name,
-                is_free = source.is_free,
-                price = source.price,
-                release_date = source.release_date,
-                developer = source.developer,
-                publisher = source.publisher,
-                genres = source.genres,
-                categories = source.categories,
-                platforms = source.platforms,
-                metacritic_score = source.metacritic_score,
-                recommendations = source.recommendations,
-                short_description = source.short_description,
-                languages = source.languages
-            WHEN NOT MATCHED THEN
-                INSERT (appid, name, is_free, price, release_date,
-                        developer, publisher, genres, categories,
-                        platforms, metacritic_score, recommendations,
-                        short_description, languages)
-                VALUES (source.appid, source.name, source.is_free, source.price, source.release_date,
-                        source.developer, source.publisher, source.genres, source.categories,
-                        source.platforms, source.metacritic_score, source.recommendations,
-                        source.short_description, source.languages)
-        """
-
         for game in games:
-            name = game.get("name", "")
+            # Prepare all fields with escaping for single quotes
+            def esc(val):
+                return val.replace("'", "''") if isinstance(val, str) else val
+
+            appid = game.get("steam_appid")
+            name = esc(game.get("name", ""))
             is_free = game.get("is_free", False)
             price = game.get("price_overview", {}).get("final", 0) / 100 if game.get("price_overview") else 0
-            release_date = game.get("release_date", {}).get("date", "")
-            developer = game.get("developers", [""])[0]
-            publisher = game.get("publishers", [""])[0]
-            genres = ", ".join([g.get("description", "") for g in game.get("genres", [])])
-            categories = ", ".join([c.get("description", "") for c in game.get("categories", [])])
-            platforms = json.dumps(game.get("platforms", {}))
-            metacritic_score = game.get("metacritic", {}).get("score", None)
-            recommendations = game.get("recommendations", {}).get("total", None)
-            short_description = game.get("short_description", "")
-            languages = game.get("supported_languages", "")
+            release_date = esc(game.get("release_date", {}).get("date", ""))
+            developer = esc(game.get("developers", [""])[0])
+            publisher = esc(game.get("publishers", [""])[0])
+            genres = esc(", ".join([g.get("description", "") for g in game.get("genres", [])]))
+            categories = esc(", ".join([c.get("description", "") for c in game.get("categories", [])]))
+            platforms = esc(json.dumps(game.get("platforms", {})))
+            metacritic_score = game.get("metacritic", {}).get("score")
+            recommendations = game.get("recommendations", {}).get("total")
+            short_description = esc(game.get("short_description", ""))
+            languages = esc(game.get("supported_languages", ""))
 
-            cursor.execute(merge_sql, (
-                game["steam_appid"], name, is_free, price, release_date,
-                developer, publisher, genres, categories, platforms,
-                metacritic_score, recommendations, short_description, languages
-            ))
+            # Handle NULLs for numbers
+            metacritic_sql = "NULL" if metacritic_score is None else metacritic_score
+            recommendations_sql = "NULL" if recommendations is None else recommendations
+
+            merge_sql = f"""
+                MERGE INTO raw_games AS target
+                USING (SELECT {appid} AS appid, '{name}' AS name, {str(is_free).upper()} AS is_free, {price} AS price, '{release_date}' AS release_date,
+                              '{developer}' AS developer, '{publisher}' AS publisher, '{genres}' AS genres, '{categories}' AS categories,
+                              '{platforms}' AS platforms, {metacritic_sql} AS metacritic_score, {recommendations_sql} AS recommendations,
+                              '{short_description}' AS short_description, '{languages}' AS languages) AS source
+                ON target.appid = source.appid
+                WHEN MATCHED THEN UPDATE SET
+                    name = source.name,
+                    is_free = source.is_free,
+                    price = source.price,
+                    release_date = source.release_date,
+                    developer = source.developer,
+                    publisher = source.publisher,
+                    genres = source.genres,
+                    categories = source.categories,
+                    platforms = source.platforms,
+                    metacritic_score = source.metacritic_score,
+                    recommendations = source.recommendations,
+                    short_description = source.short_description,
+                    languages = source.languages
+                WHEN NOT MATCHED THEN
+                    INSERT (appid, name, is_free, price, release_date,
+                            developer, publisher, genres, categories,
+                            platforms, metacritic_score, recommendations,
+                            short_description, languages)
+                    VALUES (source.appid, source.name, source.is_free, source.price, source.release_date,
+                            source.developer, source.publisher, source.genres, source.categories,
+                            source.platforms, source.metacritic_score, source.recommendations,
+                            source.short_description, source.languages)
+            """
+
+            cursor.execute(merge_sql)
 
         cursor.close()
         conn.close()
