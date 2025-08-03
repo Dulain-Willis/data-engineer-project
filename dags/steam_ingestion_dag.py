@@ -26,7 +26,7 @@ def steam_ingestion():
         url = "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
         response = requests.get(url)
         response.raise_for_status()
-        return response.json()["applist"]["apps"][20000:20100]  # Limit for dev
+        return response.json()["applist"]["apps"][20100:30000]  # Limit for dev
 
     @task()
     def fetch_game_details(apps):
