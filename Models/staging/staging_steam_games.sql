@@ -2,7 +2,7 @@ SELECT
     app_id,
     name,
     is_free,
-    price,
+    price::NUMBER(38,2) AS price,
     release_date,
     developer,
     publisher,

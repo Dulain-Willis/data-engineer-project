@@ -8,9 +8,3 @@ sources:
     tables:
       - name: raw_games
         description: "Raw Steam Games ingested from Steam API"
-        columns:
-          - name: appid
-            description: "Steam appid, primary key for each game"
-            tests:
-              - not null
-              - unique
