@@ -1,3 +1,10 @@
+{{
+  config(
+    alias='staging_steam_games'
+    materialized='view'
+  )
+}}
+
 WITH final AS (
     SELECT
         app_id,
