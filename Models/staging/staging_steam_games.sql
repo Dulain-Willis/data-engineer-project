@@ -1,8 +1,8 @@
 {{
-  config(
-    alias='staging_steam_games'
-    materialized='view'
-  )
+    config(
+        alias='stg_steam_games'
+        materialized='view'
+    )
 }}
 
 WITH final AS (
@@ -24,19 +24,5 @@ WITH final AS (
 FROM {{ source('raw', 'raw_games') }}
 )
 
-SELECT 
-    f.app_id,
-    f.name,
-    f.is_free,
-    f.price,
-    f.release_date,
-    f.developer,
-    f.publisher,
-    f.genres,
-    f.categories,
-    f.platforms,
-    f.metacritic_score,
-    f.recommendations,
-    f.short_description,
-    f.languages
-FROM final AS f
+SELECT *
+FROM final
