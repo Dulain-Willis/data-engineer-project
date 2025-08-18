@@ -1,6 +1,6 @@
 {{
     config(
-        alias='stg_steam_games'
+        alias='stg_steam_games',
         materialized='view'
     )
 }}

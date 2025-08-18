@@ -2,24 +2,25 @@ version: 2
 
 models:
   - name: staging_steam_games
-    description: One-to-one cleaned staging model of the raw Steam games source
+    description: One to one with model of raw games source cleaned 
     config:
       contract:
         enforced: true
     columns:
+
       - name: app_id
-        description: Unique id for each Steam app
+        description: Unique id for each steam app 
         data_type: number
         tests:
           - not_null
           - unique
       
       - name: name
-        description: The name of the Steam app
+        description: The name of the steam app
         data_type: varchar
 
       - name: is_free
-        description: Whether the app is free to play
+        description: Wether or not the app is a free to play game 
         data_type: boolean
 
       - name: price
@@ -31,35 +32,35 @@ models:
         data_type: date
 
       - name: developer
-        description: The developer names for the app
+        description: The names of the different developers for the app
         data_type: varchar
 
       - name: publisher
-        description: The publisher names for the app
+        description: The names of the different publishers for an app
         data_type: varchar
 
       - name: genres
-        description: The genres associated with the app
+        description: The different genre categorizations of the app (Action, Indie, etc.)
         data_type: varchar
 
       - name: categories
-        description: The categories associated with the app
+        description: The different categories of the app
         data_type: varchar
 
       - name: platforms
-        description: The platforms supported by the app
+        description: Supported platforms for the app (e.g., windows, mac, linux)
         data_type: varchar
 
       - name: metacritic_score
-        description: The Metacritic score for the app
+        description: Metacritic score for the app
         data_type: number
 
       - name: recommendations
-        description: The number of user recommendations for the app
+        description: Total number of user recommendations
         data_type: number
 
       - name: short_description
-        description: A short description of the app
+        description: Short summary of the app
         data_type: varchar
 
       - name: languages
