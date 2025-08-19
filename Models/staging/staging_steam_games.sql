@@ -7,7 +7,7 @@
 
 WITH final AS (
     SELECT
-        app_id,
+        appid,
         name,
         is_free,
         price::NUMBER(38,2) AS price,
