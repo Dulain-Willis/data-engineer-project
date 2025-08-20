@@ -11,7 +11,7 @@ WITH final AS (
         name,
         is_free,
         price::NUMBER(38,2) AS price,
-        NULLIF(TO_DATE(release_date, 'MON DD, YYYY'), '') AS release_date,
+        TO_DATE(NULLIF(release_date, ''), 'MON DD, YYYY') AS release_date,
         NULLIF(developer, '') AS developer,
         NULLIF(publisher, '') AS publisher,
         NULLIF(genres, '') AS genres,

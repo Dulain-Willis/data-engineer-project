@@ -7,13 +7,12 @@ models:
       contract:
         enforced: true
     columns:
-
       - name: app_id
         description: Unique id for each steam app 
         data_type: number
         tests:
-          - not_null
           - unique
+          - not null
       
       - name: name
         description: The name of the steam app
