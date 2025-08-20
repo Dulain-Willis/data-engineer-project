@@ -1,6 +1,6 @@
 {{
 	config(
-		alias='int_categories'
+		alias='int_categories',
 		materialized='view'
 	)
 }}
@@ -18,7 +18,7 @@ WITH base AS (
 --select appid and categories from the previous CTE, flattening the split categories array and keeping
 --only the values that are not null and not blank either
 
-flatten AS (
+final AS (
 	SELECT
 		appid,
 		LOWER(TRIM(f.value::VARCHAR)) AS categories
