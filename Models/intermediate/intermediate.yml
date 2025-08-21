@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: intermediate_categories
+    description: One row per appid and category
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: appid
+        description: Unique id for each steam app
+        data_type: number
+
+      - name: categories
+        description: The different categories of the app
+        data_type: varchar
