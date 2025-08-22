@@ -1,6 +1,6 @@
 {{
 	config(
-		alias='int_platforms'
+		alias='int_platforms',
 		materialized='view'
 	)
 }}
@@ -23,11 +23,11 @@ WITH base AS (
 final AS (
     SELECT
         b.appid,
-        v.value::string AS platform
+        v.value::VARCHAR AS platforms
     FROM base b,
-         lateral flatten(input => object_keys(platforms_json)) v
+         LATERAL FLATTEN(input => object_keys(platforms_json)) v
     WHERE GET(b.platforms_json, v.value)::BOOLEAN
 )
 
 SELECT *
-FROM final;
+FROM final

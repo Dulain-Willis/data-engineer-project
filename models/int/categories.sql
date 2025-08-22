@@ -11,7 +11,11 @@
 WITH base AS (
 	SELECT
 		appid,
-		SPLIT(REGEXP_REPLACE(COALESCE(categories, ''), '\\s*,\\s*', ','), ',') AS split_categories
+		SPLIT(
+            REGEXP_REPLACE(
+                COALESCE(categories, ''),
+            '\\s*,\\s*', ','),
+        ',') AS split_categories
 	FROM {{ ref('staging_steam_games') }}
 ),
 
@@ -29,6 +33,3 @@ final AS (
 )
 
 SELECT * FROM final
-
-
-
