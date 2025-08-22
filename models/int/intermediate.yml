@@ -81,5 +81,5 @@ models:
         data_type: varchar
 
     tests:
-      - dbt_utils.unique_combiantion_of_columns:
+      - dbt_utils.unique_combination_of_columns:
           combination_of_columns: ['appid','platforms']

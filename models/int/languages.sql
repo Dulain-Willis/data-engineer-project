@@ -1,6 +1,6 @@
 {{
 	config(
-		alias='int_languages'
+		alias='int_languages',
 		materialized='view'
 	)
 }}
@@ -20,10 +20,9 @@ WITH base AS (
 final AS (
     SELECT
         b.appid,
-        LOWER(TRIM(f.value))
+        LOWER(TRIM(f.value::VARCHAR)) AS languages
     FROM base AS b,
         LATERAL FLATTEN(input => raw_languages) AS f
 )
 
 SELECT * FROM final
-	
