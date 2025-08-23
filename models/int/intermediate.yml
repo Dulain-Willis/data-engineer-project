@@ -83,3 +83,18 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: ['appid','platforms']
+
+
+  - name: title_token
+    description: One row per word in app title
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: appid
+        description: Unique id for each steam app
+        data_type: number
+        tests:
+          - not_null
+
+      - name: 
