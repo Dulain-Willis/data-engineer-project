@@ -97,4 +97,11 @@ models:
         tests:
           - not_null
 
-      - name: 
+      - name: words
+        description: 
+    
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: ['appid','words']
+
+
