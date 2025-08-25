@@ -5,7 +5,8 @@
     )
 }}
 
-SELECT 
-    {{ dbt_utils.generate_surrogate_key(['words']) }} AS words,
+SELECT DISTINCT
+    {{ dbt_utils.generate_surrogate_key(['words']) }} AS words_sk,
     words 
 FROM {{ ref('title_token') }} 
+WHERE words != ''

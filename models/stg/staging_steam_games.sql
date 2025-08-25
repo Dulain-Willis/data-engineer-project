@@ -8,7 +8,7 @@
 WITH final AS (
     SELECT
         appid,
-        name,
+        name AS title, 
         is_free,
         price::NUMBER(38,2) AS price,
         TO_DATE(NULLIF(release_date, ''), 'MON DD, YYYY') AS release_date,
