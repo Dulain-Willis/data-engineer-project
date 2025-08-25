@@ -21,5 +21,5 @@ flatten AS (
 )
 
 SELECT * FROM flatten
-    
+--I NEED TO ADD STOP WORDS TO THIS MODEL
 	
