@@ -14,7 +14,7 @@ models:
           - unique
           - not_null
       
-      - name: name
+      - name: title
         description: The name of the steam app
         data_type: varchar
 
