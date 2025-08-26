@@ -15,12 +15,12 @@ WITH base AS (
 final AS (
     SELECT
         appid, 
-        f.value::VARCHAR AS words 
+        LOWER(f.value::VARCHAR) AS words 
     FROM base,
         LATERAL FLATTEN(input => raw_title) f
 	WHERE f.value != ''
 		AND LENGTH(f.value) > 2
-		AND f.value NOT IN (
+		AND LOWER(f.value) NOT IN (
 			SELECT word	
 			FROM {{ ref('stop_words') }}
 		)
