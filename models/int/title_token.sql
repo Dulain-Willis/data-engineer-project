@@ -20,8 +20,11 @@ final AS (
         LATERAL FLATTEN(input => raw_title) f
 	WHERE f.value != ''
 		AND LENGTH(f.value) > 2
+		AND f.value NOT IN (
+			SELECT word	
+			FROM {{ ref('stop_words') }}
+		)
 )
 
 SELECT * FROM final
---I NEED TO ADD STOP WORDS TO THIS MODEL!!!!!!!!!
-	
+
