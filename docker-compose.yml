@@ -27,3 +27,8 @@ services:
       timeout: 30s
       retries: 50
 
+  airflow-webserver:
+    - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    - AIRFLOW__CORE__EXECUTOR: 
+     
+
