@@ -17,6 +17,7 @@ services:
       interval: 5s
       retries: 5
 
+
   redis:
     image: redis:7.2-bookworm
     expose: 
@@ -27,8 +28,42 @@ services:
       timeout: 30s
       retries: 50
 
-  airflow-webserver:
-    - AIRFLOW__CORE__LOAD_EXAMPLES=False
-    - AIRFLOW__CORE__EXECUTOR: 
-     
 
+# ---AIRFLOW WEBSERVER---
+  airflow-webserver:
+
+    build: 
+      context: ./airflow
+      dockerfile: Dockerfile      
+
+    command: airflow webserver 
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    ports:
+      - "8080:8080"
+
+    enviroment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__FERNET_KEY: "${FERNET_KEY}"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: "${WEBSERVER_SECRET_KEY}"
+     
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/requirements.txt:/requirements.txt
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
