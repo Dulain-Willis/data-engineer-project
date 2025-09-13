@@ -1,8 +1,26 @@
-astro
+# Git and environment files
 .git
 .env
-airflow_settings.yaml
-logs/
 .venv
-airflow.db
-airflow.cfg
+
+# Build artifacts
+**/target/
+**/dbt_packages/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Logs and databases
+logs/
+*.db
+*.sqlite
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
