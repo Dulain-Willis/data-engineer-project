@@ -23,3 +23,11 @@ services:
     tty: true
     depends_on:
       - minio
+
+  terraform:
+    image: hashicorp/terraform
+    working_dir: /workspace
+    volumes:
+      - ./infra/terraform:/workspace
+    entrypoint: ["terraform"]
+
