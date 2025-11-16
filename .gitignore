@@ -2,13 +2,10 @@
 .env
 __pycache__/
 *.pyc
-.dg_env/
 
-# astro
-.astro/
-
-# Ignore virtual environments
+# Virtual Environments
 .venv/
+venv/
 
 # dbt
 dbt.log
@@ -17,3 +14,5 @@ target/
 dbt_packages/
 
 .DS_Store
+
+secrets.auto.tfvars
