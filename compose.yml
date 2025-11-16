@@ -16,18 +16,22 @@ services:
     ports:
       - "9000:9000"
       #- "9001:9001" \ enable this for web browser use
+    volumes:
+      - ./mnt/minio:/data
 
   mc:
     image: minio/mc
-    entrypoint: /bin/sh
+    entrypoint: /bin/bash
     tty: true
     depends_on:
       - minio
+    volumes:
+      - ./mnt/mc:/root/.mc
 
   terraform:
     image: hashicorp/terraform
     working_dir: /workspace
+    entrypoint: ["terraform"]
     volumes:
       - ./infra/terraform:/workspace
-    entrypoint: ["terraform"]
 

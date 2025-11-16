@@ -16,3 +16,10 @@ dbt_packages/
 .DS_Store
 
 secrets.auto.tfvars
+mnt/
+
+# Terraform junk
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
