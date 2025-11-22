@@ -25,6 +25,7 @@ def get_steamspy_api():
             break
 
         if not data:
+            print("This page is empty, ending process")
             break
 
         data_dict.update(data)
@@ -37,5 +38,3 @@ def get_steamspy_api():
     return data_dict
 
 print(len(get_steamspy_api()))
-
-
