@@ -36,5 +36,3 @@ def get_steamspy_api():
         time.sleep(60)
 
     return data_dict
-
-print(len(get_steamspy_api()))
