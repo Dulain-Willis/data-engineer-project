@@ -18,7 +18,3 @@ def upload_to_minio(
         length=len(raw_bytes),
         content_type=content_type,
     )
-
-    print(f"Uploaded '{object_name}' to bucket '{bucket}'")
-
-

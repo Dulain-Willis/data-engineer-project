@@ -9,7 +9,7 @@ params = {
     "page": 0
 }
 
-def get_steamspy_api():
+def call_steamspy_api():
     data_dict = {}
 
     while True:
