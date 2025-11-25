@@ -1,16 +1,30 @@
+x-airflow-common: &airflow-common
+  #shared config for airflow services
+  image: apache/airflow:2.10.3
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+    AIRFLOW_UID: "50000"
+  depends_on:
+    - postgres
+  volumes:
+    - ./mnt/airflow/dags:/opt/airflow/dags
+    - ./mnt/airflow/logs:/opt/airflow/logs
+    - ./mnt/airflow/plugins:/opt/airflow/plugins
+
 services:
 
   postgres:
+  #analytics warehouse & airflow DB
     image: postgres:16
     environment:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
 
-  airflow:
-    image: apache/airflow
-
   minio:
+  #S3 like object/bucket storage
     image: minio/minio
     command: server /data #--console-address ":9001" | enable for web browser use
     environment:
@@ -18,13 +32,14 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
       - "9000:9000"
-      #- "9001:9001" | enable this for web browser use
+      #- "9001:9001" \ enable this for web browser use
     volumes:
       - ./mnt/minio:/data
 
   mc:
+  #cli for interacting with minio
     image: minio/mc
-    entrypoint: /bin/bash
+    entrypoint: /bin/bash #docker compose run --rm mc \ to hop in container using mc
     tty: true
     depends_on:
       - minio
@@ -32,9 +47,21 @@ services:
       - ./mnt/mc:/root/.mc
 
   terraform:
+  #IAC for minio buckets
     image: hashicorp/terraform
     working_dir: /workspace
     entrypoint: ["terraform"]
     volumes:
       - ./infra/terraform:/workspace
 
+  airflow_webserver:
+    <<: *airflow-common 
+    command: webserver
+    ports:
+      - "8080:8080"
+    restart: always
+
+  airflow_scheduler:
+    <<: *airflow-common 
+    command: scheduler
+    restart: always
