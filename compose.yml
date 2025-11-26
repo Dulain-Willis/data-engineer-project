@@ -4,14 +4,17 @@ x-airflow-common: &airflow-common
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/postgres
     AIRFLOW_UID: "50000"
+    PYTHONPATH: /opt/airflow/src:/opt/airflow/conn
   depends_on:
     - postgres
   volumes:
-    - ./mnt/airflow/dags:/opt/airflow/dags
-    - ./mnt/airflow/logs:/opt/airflow/logs
-    - ./mnt/airflow/plugins:/opt/airflow/plugins
+    - ./src:/opt/airflow/src
+    - ./conn:/opt/airflow/conn
+    - ./pipelines/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/plugins:/opt/airflow/plugins
 
 services:
 
@@ -34,7 +37,7 @@ services:
       - "9000:9000"
       #- "9001:9001" \ enable this for web browser use
     volumes:
-      - ./mnt/minio:/data
+      - ./.mnt/minio:/data
 
   mc:
   #cli for interacting with minio
@@ -44,7 +47,7 @@ services:
     depends_on:
       - minio
     volumes:
-      - ./mnt/mc:/root/.mc
+      - ./.mnt/mc:/root/.mc
 
   terraform:
   #IAC for minio buckets
@@ -53,6 +56,13 @@ services:
     entrypoint: ["terraform"]
     volumes:
       - ./infra/terraform:/workspace
+
+  airflow_init:
+    <<: *airflow-common
+    command: bash -c "airflow db migrate && airflow users create --firstname admin --lastname admin --email admin --password admin --username admin --role Admin"
+    depends_on:
+      - postgres
+    restart: "no"
 
   airflow_webserver:
     <<: *airflow-common 

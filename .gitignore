@@ -16,6 +16,7 @@ dbt_packages/
 .DS_Store
 
 secrets.auto.tfvars
+.mnt/
 mnt/
 
 # Terraform junk
