@@ -6,12 +6,9 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/postgres
     AIRFLOW_UID: "50000"
-    PYTHONPATH: /opt/airflow/src:/opt/airflow/conn
   depends_on:
     - postgres
   volumes:
-    - ./src:/opt/airflow/src
-    - ./conn:/opt/airflow/conn
     - ./pipelines/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
