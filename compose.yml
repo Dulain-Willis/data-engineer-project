@@ -9,7 +9,7 @@ x-airflow-common: &airflow-common
   depends_on:
     - postgres
   volumes:
-    - ./pipelines/dags:/opt/airflow/dags
+    - ./dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
 

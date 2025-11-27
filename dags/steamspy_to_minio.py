@@ -3,8 +3,8 @@ from airflow.decorators import dag, task
 from datetime import datetime
 import json
 
-from extr.steamspy_api import call_steamspy_api
-from load.minio_loader import upload_to_minio
+from src.extr.steamspy_api import call_steamspy_api
+from src.load.minio_loader import upload_to_minio
 
 bucket_name = 'steamspy-dev-raw'
 object_name = 'steamspy_json'
