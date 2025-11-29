@@ -1,6 +1,6 @@
 # Steam Data Platform
 
-A fully automated, scalable, & containerized, end-to-end batch data pipeline that ingests data from the Steam ecosystem, stores it in S3-compatible object storage, loads it into a warehouse, and transforms it using dbt. Everything is orchestrated with Airflow and the infrastructure is managed with Docker and Terraform.
+A fully automated & containerized, end-to-end batch data pipeline that ingests data from the Steam ecosystem, stores it in S3-compatible object storage, loads it into a warehouse, and transforms it using dbt. Everything is orchestrated with Airflow and the infrastructure is managed with Docker and Terraform.
 
 ## Overview
 
@@ -20,14 +20,14 @@ This project pulls Steam game metadata, lands the raw JSON in MinIO, moves it th
             Airbyte (ELT Ingestion)
                     |
                     v
-          Postgres / Snowflake Warehouse
+            Postgres Warehouse
                     |
                     v
-                    dbt
+                   dbt
      (staging → intermediate → mart)
                     |
                     v
-                Analytics Layer
+              Analytics Layer
 
 ## Features
 
