@@ -41,28 +41,29 @@ This project pulls Steam game metadata, lands the raw JSON in MinIO, moves it th
 - Terraform provisioning of MinIO buckets  
 - Modular design to expand to additional APIs or structured processing (PySpark)
 
-## Repository Structure
+# Repository Structure
 
     .
     ├── airflow/
-    │   └── dags/
-    ├── connectors/
-    │   └── minio/
-    ├── src/
-    │   ├── extract/
-    │   ├── load/
-    │   └── transform/
-    ├── dbt/
-    │   ├── models/
-    │   │   ├── bronze/
-    │   │   ├── silver/
-    │   │   └── gold/
-    │   ├── macros/
-    │   ├── snapshots/
-    │   └── tests/
+    │   ├── logs/
+    │   └── plugins/
+    ├── dags/
+    │   ├── src/
+    │   │   ├── extract/
+    │   │   ├── load/
+    │   │   └── transform/
+    │   ├── connectors/
+    │   ├── <dag_1>.py
+    │   └── <dag_2>.py
+    ├── transform/
+    │   └── dbt/
+    │       ├── models/
+    │       ├── macros/
+    │       ├── snapshots/
+    │       └── tests/
     ├── infra/
-    │   ├── terraform/
-    │   └── docker/
+    │   ├── docker/
+    │   └── terraform/
     └── README.md
 
 ## How the Pipeline Works
