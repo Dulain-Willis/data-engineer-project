@@ -33,7 +33,7 @@ This project pulls Steam game metadata, lands the raw JSON in MinIO, moves it th
 
 - Extraction from Steam APIs using Python  
 - Raw JSON storage in MinIO  
-- Airbyte ingestion into Postgres or Snowflake  
+- Airbyte ingestion into Postgres (analytics warehouse)  
 - dbt transformation layer following a bronze/silver/gold model  
 - Incremental models, schema tests, documentation, and Jinja macros  
 - Airflow DAG orchestrating extract → load → transform  
