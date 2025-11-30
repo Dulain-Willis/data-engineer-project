@@ -128,15 +128,7 @@ To run dbt manually:
 - staging: raw game data from both APIs  
 - int: normalized and cleaned tables  
 - mart: analytics marts including dimensions and facts  
-
-## Roadmap
-
-- Expand API coverage  
-- Add Great Expectations or Soda for data quality  
-- Add GitHub Actions CI/CD for dbt  
-- Add dashboards with Superset or Metabase  
-- Optional streaming ingestion using Kafka  
-
+ 
 ## Contact
 
 Created by **Dulain Willis**.  
