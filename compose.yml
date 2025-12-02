@@ -1,6 +1,6 @@
 x-airflow-common: &airflow-common
   #shared config for airflow services
-  image: apache/airflow:2.10.3
+  image: airflow-custom
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
@@ -56,12 +56,15 @@ services:
 
   airflow_init:
     <<: *airflow-common
-    command: bash -c "airflow db migrate && airflow users create --firstname admin --lastname admin --email admin --password admin --username admin --role Admin"
+    command: bash -c "airflow db init && airflow users create --firstname admin --lastname admin --email admin --password admin --username admin --role Admin"
     depends_on:
       - postgres
     restart: "no"
 
   airflow_webserver:
+    build:
+      context: .
+      dockerfile: infra/docker/airflow/Dockerfile
     <<: *airflow-common 
     command: webserver
     ports:
