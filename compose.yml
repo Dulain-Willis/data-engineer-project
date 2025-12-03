@@ -16,7 +16,7 @@ x-airflow-common: &airflow-common
 services:
 
   postgres:
-  #analytics warehouse & airflow DB
+  #airflow DB
     image: postgres:16
     environment:
       POSTGRES_PASSWORD: postgres
@@ -75,3 +75,13 @@ services:
     <<: *airflow-common 
     command: scheduler
     restart: always
+
+  spark:
+    image: apache/spark-py
+    container_name: spark-playground
+    stdin_open: true
+    tty: true
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ./.mnt/minio:/data
