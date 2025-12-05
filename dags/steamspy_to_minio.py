@@ -7,7 +7,7 @@ from src.extr.steamspy_api import call_steamspy_api
 from src.load.minio_loader import upload_to_minio
 
 bucket_name = 'steamspy-dev-raw'
-object_name = 'steamspy_json'
+object_name = 'steamspy-payload.json'
 
 @dag(
     dag_id="steamspy_to_minio",
