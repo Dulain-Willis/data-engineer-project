@@ -26,13 +26,14 @@ services:
   minio:
   #S3 like object/bucket storage
     image: minio/minio
-    command: server /data #--console-address ":9001" | enable for web browser use
+    container_name: minio
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001" 
     ports:
       - "9000:9000"
-      #- "9001:9001" \ enable this for web browser use
+      - "9001:9001" 
     volumes:
       - ./.mnt/minio:/data
 
