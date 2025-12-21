@@ -18,6 +18,7 @@ services:
   postgres:
   #airflow DB
     image: postgres:16
+    container_name: postgres
     environment:
       POSTGRES_PASSWORD: postgres
     ports:
@@ -40,6 +41,7 @@ services:
   mc:
   #cli for interacting with minio
     image: minio/mc
+    container_name: mc 
     entrypoint: /bin/bash #docker compose run --rm mc \ to hop in container using mc
     tty: true
     depends_on:
@@ -50,39 +52,42 @@ services:
   terraform:
   #IAC for minio buckets
     image: hashicorp/terraform
+    container_name: terraform
     working_dir: /workspace
     entrypoint: ["terraform"]
     volumes:
       - ./infra/terraform:/workspace
 
-  airflow_init:
+  spark-master:
+    image: apache/spark:3.5.7-scala2.12-java11-ubuntu
+    container_name: spark-master
+
+  spark-worker:
+    image: apache/spark:3.5.7-scala2.12-java11-ubuntu
+    container_name: spark-worker
+
+  airflow-init:
     <<: *airflow-common
+    container_name: airflow-init
     command: bash -c "airflow db init && airflow users create --firstname admin --lastname admin --email admin --password admin --username admin --role Admin"
     depends_on:
       - postgres
     restart: "no"
 
-  airflow_webserver:
+  airflow-webserver:
     build:
       context: .
       dockerfile: infra/docker/airflow/Dockerfile
+    container_name: airflow-webserver
     <<: *airflow-common 
     command: webserver
     ports:
       - "8080:8080"
     restart: always
 
-  airflow_scheduler:
+  airflow-scheduler:
+    container_name: airflow-scheduler
     <<: *airflow-common 
     command: scheduler
     restart: always
 
-  spark:
-    image: apache/spark-py
-    container_name: spark-playground
-    stdin_open: true
-    tty: true
-    working_dir: /app
-    volumes:
-      - .:/app
-      - ./.mnt/minio:/data
