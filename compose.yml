@@ -59,12 +59,25 @@ services:
       - ./infra/terraform:/workspace
 
   spark-master:
-    image: apache/spark:3.5.7-scala2.12-java11-ubuntu
+    image: apache/spark:4.1.0-scala2.13-java21-python3-r-ubuntu
     container_name: spark-master
+    command: -c "/opt/spark/sbin/start-master.sh"
+    entrypoint: /bin/bash 
+    environment: 
+      - SPARK_NO_DAEMONIZE=true
+    ports:
+      - "8081:8080"
+      - "7077:7077"
 
   spark-worker:
-    image: apache/spark:3.5.7-scala2.12-java11-ubuntu
+    image: apache/spark:4.1.0-scala2.13-java21-python3-r-ubuntu
     container_name: spark-worker
+    entrypoint: /bin/bash
+    command: -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077"
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    depends_on:
+     - spark-master
 
   airflow-init:
     <<: *airflow-common
