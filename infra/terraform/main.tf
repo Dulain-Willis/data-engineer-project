@@ -1,5 +1,5 @@
-module "raw_bucket" {
+module "steam_bucket" {
   source = "./modules/minio-bucket"
 
-  bucket_name = "${var.project}-${var.environment}-raw"
+  bucket_name = "steam"
 }

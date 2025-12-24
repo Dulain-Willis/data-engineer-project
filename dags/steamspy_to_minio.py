@@ -6,8 +6,10 @@ import json
 from src.extr.steamspy_api import call_steamspy_api
 from src.load.minio_loader import upload_to_minio
 
-bucket_name = 'steamspy-dev-raw'
-object_name = 'steamspy-payload.json'
+bucket_name = "steam"
+dataset_prefix = "steamspy"
+bronze_prefix = f"bronze/{dataset_prefix}"
+object_name = f"{bronze_prefix}/steamspy-payload.json"
 
 @dag(
     dag_id="steamspy_to_minio",
@@ -29,8 +31,8 @@ def steamspy_to_minio():
             bucket_name,
             object_name,
             json_to_bytes,
-            "application/json"
-    )
+            "application/json",
+        )
 
     load(extract())
 
