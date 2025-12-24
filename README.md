@@ -62,10 +62,10 @@ This project pulls Steam game metadata, lands the raw JSON in MinIO, moves it th
     │       ├── snapshots/
     │       └── tests/
     ├── spark/
-    │   ├── jobs/            # PySpark entrypoints
-    │   ├── lib/             # shared helpers (session builder, UDFs, schemas)
-    │   ├── config/          # config loader for jobs
-    │   └── tests/           # lightweight unit tests
+    │   ├── jobs/            
+    │   ├── lib/             
+    │   ├── config/          
+    │   └── tests/           
     ├── infra/
     │   ├── docker/
     │   └── terraform/
