@@ -17,7 +17,7 @@ def call_steamspy_api():
         try:
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
-            print(f"Successful Request for page {params["page"]}")
+            print(f"Successful Request for page {params['page']}")
             data = response.json()
 
         except RequestException as e:
