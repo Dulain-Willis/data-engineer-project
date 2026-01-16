@@ -12,7 +12,7 @@ RUN apt-get install -y --no-install-recommends ca-certificates
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
-# where Java is installed
+# where Java is installed inside airflow container
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
 
 ARG SPARK_VERSION=3.5.3
