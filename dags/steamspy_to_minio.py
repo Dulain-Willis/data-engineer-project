@@ -5,7 +5,7 @@ import json
 
 from src.extr.steamspy_api import call_steamspy_api
 from src.load.minio_loader import upload_to_minio
-from conn.spark_conf import get_s3a_conf
+from conn.spark_conf import get_s3a_conf, get_spark_resource_conf
 
 bucket_name = 'steamspy-dev-raw'
 object_name = 'steamspy_json'
@@ -32,7 +32,7 @@ def steamspy_to_minio():
         task_id="transform",
         application="/opt/airflow/dags/spark_jobs/bronze_to_silver.py",
         conn_id="spark_default",
-        conf=get_s3a_conf(),
+        conf={**get_s3a_conf(), **get_spark_resource_conf()},
     )
 
     # Pipeline: extract >> load >> transform

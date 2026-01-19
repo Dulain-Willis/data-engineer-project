@@ -32,8 +32,14 @@ RUN rm /tmp/spark.tgz
 ENV SPARK_HOME=/opt/spark
 ENV PATH=/opt/spark/bin:$PATH
 
+# Download S3A connector JARs so Spark can read from MinIO
+RUN curl -fL https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar \
+    -o /opt/spark/jars/hadoop-aws-3.3.4.jar && \
+    curl -fL https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar \
+    -o /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
+
 USER airflow
 ARG AIRFLOW_VERSION=2.10.3
 ARG PYTHON_VERSION=3.12
-RUN pip install --no-cache-dir apache-airflow==${AIRFLOW_VERSION} apache-airflow-providers-apache-spark pyspark==3.5.3 --constraint https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt
+RUN pip install --no-cache-dir apache-airflow==${AIRFLOW_VERSION} apache-airflow-providers-apache-spark pyspark==3.5.3 minio --constraint https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt
 

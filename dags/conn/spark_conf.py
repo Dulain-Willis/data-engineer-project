@@ -22,3 +22,18 @@ def apply_s3a_conf(spark_conf):
     for key, value in get_s3a_conf().items():
         spark_conf.set(key, value)
     return spark_conf
+
+
+def get_spark_resource_conf() -> dict:
+    """Resource configuration for memory-constrained environments (5GB Docker pool).
+
+    Total Spark footprint: ~2.8GB (leaves room for Airflow, MinIO, etc.)
+    Memory breakdown: 1g + 384m (driver) + 1g + 384m (executor)
+    """
+    return {
+        "spark.driver.memory": "1g",
+        "spark.executor.memory": "1g",
+        "spark.driver.memoryOverhead": "384m",
+        "spark.executor.memoryOverhead": "384m",
+        "spark.sql.shuffle.partitions": "8",  # Reduce from default 200
+    }
