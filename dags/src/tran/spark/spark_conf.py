@@ -7,7 +7,7 @@ MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
 
 
 def get_s3a_conf() -> dict:
-    """Returns S3A config dict for SparkSubmitOperator."""
+    # Returns S3A config dict for SparkSubmitOperator.
     return {
         "spark.hadoop.fs.s3a.endpoint": MINIO_ENDPOINT,
         "spark.hadoop.fs.s3a.access.key": MINIO_ACCESS_KEY,
@@ -18,18 +18,16 @@ def get_s3a_conf() -> dict:
 
 
 def apply_s3a_conf(spark_conf):
-    """Applies S3A config to a SparkConf object."""
+    # Applies S3A config to a SparkConf object.
     for key, value in get_s3a_conf().items():
         spark_conf.set(key, value)
     return spark_conf
 
 
 def get_spark_resource_conf() -> dict:
-    """Resource configuration for memory-constrained environments (5GB Docker pool).
-
-    Total Spark footprint: ~2.8GB (leaves room for Airflow, MinIO, etc.)
-    Memory breakdown: 1g + 384m (driver) + 1g + 384m (executor)
-    """
+    # Resource configuration for memory-constrained environments (5GB Docker pool).
+    # Total Spark footprint: ~2.8GB (leaves room for Airflow, MinIO, etc.)
+    # Memory breakdown: 1g + 384m (driver) + 1g + 384m (executor)
     return {
         "spark.driver.memory": "1g",
         "spark.executor.memory": "1g",

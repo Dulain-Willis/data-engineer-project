@@ -2,12 +2,12 @@ import os
 import sys
 
 # Add dags to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "dags"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 from dotenv import load_dotenv
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
-from conn.spark_conf import apply_s3a_conf
+from src.tran.spark.spark_conf import apply_s3a_conf
 
 load_dotenv()
 
