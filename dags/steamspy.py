@@ -30,7 +30,7 @@ def steamspy():
 
     transform = SparkSubmitOperator(
         task_id="transform",
-        application="/opt/airflow/dags/src/tran/spark/bronze_to_silver.py",
+        application="/opt/airflow/dags/src/tran/spark/steamspy_silver.py",
         conn_id="spark_default",
         conf={**get_s3a_conf(), **get_spark_resource_conf()},
     )

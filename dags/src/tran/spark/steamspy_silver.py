@@ -6,17 +6,17 @@ schema = StructType([
     StructField("name", StringType(), True),
     StructField("developer", StringType(), True),
     StructField("publisher", StringType(), True),
-    StructField("score_rank", StringType(), True),  # Can be empty string
-    StructField("owners", StringType(), True),      # Range like "0 - 20,000"
+    StructField("score_rank", StringType(), True),
+    StructField("owners", StringType(), True),
     StructField("average_forever", IntegerType(), True),
     StructField("average_2weeks", IntegerType(), True),
     StructField("median_forever", IntegerType(), True),
     StructField("median_2weeks", IntegerType(), True),
     StructField("ccu", IntegerType(), True),
-    StructField("price", IntegerType(), True),      # Cents
+    StructField("price", IntegerType(), True),
     StructField("initialprice", IntegerType(), True),
     StructField("discount", IntegerType(), True),
-    StructField("tags", StringType(), True),        # JSON string
+    StructField("tags", StringType(), True),
     StructField("languages", StringType(), True),
     StructField("genre", StringType(), True),
 ])
@@ -25,21 +25,9 @@ schema = StructType([
 def main():
     spark = SparkSession.builder.appName("bronze-to-silver").getOrCreate()
 
-    # Read raw JSON from bronze with explicit schema (avoids memory-heavy inference)
     df = spark.read.schema(schema).json("s3a://steamspy-dev-raw/steamspy_json")
 
-    # Transform: select/clean columns, cast types
-    cleaned = df.select(
-        df["appid"].cast("int"),
-        df["name"],
-        df["developer"],
-        df["publisher"],
-        df["owners"],
-        df["price"].cast("int"),
-    )
-
-    # Write to silver as Parquet
-    cleaned.write.mode("overwrite").parquet("s3a://steamspy-dev-silver/steamspy/")
+    df.write.mode("overwrite").parquet("s3a://steamspy-dev-silver/steamspy/")
 
     spark.stop()
 
