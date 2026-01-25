@@ -4,7 +4,7 @@ from utils.minio_conn import minio_client
 def upload_to_minio(
     bucket: str,
     object_name: str,
-    raw_bytes: str,
+    raw_bytes: bytes,
     content_type: str,
 ):
     client = minio_client()

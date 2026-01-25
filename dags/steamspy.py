@@ -1,10 +1,9 @@
 from airflow.decorators import dag, task
+from airflow.operators.python import get_current_context
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from datetime import datetime
-import json
 
 from src.extr.steamspy_api import call_steamspy_api
-from src.load.minio_loader import upload_to_minio
 from src.tran.spark.spark_conf import get_s3a_conf, get_spark_resource_conf
 
 bucket_name = 'steamspy-dev-raw'
@@ -21,12 +20,10 @@ def steamspy():
 
     @task
     def extract():
-        return call_steamspy_api()
-
-    @task
-    def load(extract_output):
-        json_to_bytes = json.dumps(extract_output).encode("utf-8")
-        upload_to_minio(bucket_name, object_name, json_to_bytes, "application/json")
+        ctx = get_current_context()
+        run_id = ctx["run_id"]
+        pages_uploaded = call_steamspy_api(bucket=bucket_name, run_id=run_id)
+        return {"run_id": run_id, "pages_uploaded": pages_uploaded}
 
     transform = SparkSubmitOperator(
         task_id="transform",
@@ -36,6 +33,6 @@ def steamspy():
     )
 
     # Pipeline: extract >> load >> transform
-    load(extract()) >> transform
+    extract() >> transform
 
 dag = steamspy()
