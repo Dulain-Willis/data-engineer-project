@@ -6,10 +6,12 @@ import re
 def main():
     spark = SparkSession.builder.appName("steamspy-bronze").getOrCreate()
     
-    # Get run_id from Spark config
+    # run_id keeps each Airflow run's data in its own folder.
     run_id = spark.sparkContext.getConf().get("spark.steamspy.run_id")
     if not run_id:
-        raise ValueError("spark.steamspy.run_id must be set in Spark config")
+        raise ValueError(
+            "run_id is required. Pass spark.steamspy.run_id in Spark config."
+        )
     
     # Read landing JSON files as raw text (one row per file)
     landing_path = f"s3a://bronze/landing/steamspy/request=all/run_id={run_id}/"
@@ -34,12 +36,14 @@ def main():
     extract_page_udf = udf(extract_page, IntegerType())
     
     # Add metadata columns
-    df = df.withColumn("source_file", input_file_name()) \
-           .withColumn("page", extract_page_udf(col("source_file"))) \
-           .withColumn("ingestion_timestamp", current_timestamp()) \
-           .withColumn("ingestion_date", date("ingestion_timestamp")) \
-           .withColumn("source", lit("steamspy")) \
-           .withColumn("run_id", lit(run_id))
+    df = (
+        df.withColumn("source_file", input_file_name())
+          .withColumn("page", extract_page_udf(col("source_file")))
+          .withColumn("ingestion_timestamp", current_timestamp())
+          .withColumn("ingestion_date", date("ingestion_timestamp"))
+          .withColumn("source", lit("steamspy"))
+          .withColumn("run_id", lit(run_id))
+    )
     
     # Select final columns: payload + metadata
     df_final = df.select(

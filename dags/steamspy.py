@@ -34,7 +34,7 @@ def steamspy():
         conf={
             **get_s3a_conf(),
             **get_spark_resource_conf(),
-            "spark.steamspy.run_id": "{{ ti.xcom_pull(task_ids='extract')['run_id'] }}",
+            "spark.steamspy.run_id": "{{ run_id }}",
         },
     )
     
@@ -45,7 +45,7 @@ def steamspy():
         conf={
             **get_s3a_conf(),
             **get_spark_resource_conf(),
-            "spark.steamspy.run_id": "{{ ti.xcom_pull(task_ids='extract')['run_id'] }}",
+            "spark.steamspy.run_id": "{{ run_id }}",
         },
     )
 
