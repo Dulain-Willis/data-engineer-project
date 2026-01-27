@@ -32,14 +32,16 @@ def call_steamspy_api(bucket: str, run_id: str) -> int:
             break
 
         object_name = (
-            f"landing/steamspy/request={request_type}/run_id={run_id}/page={page:04d}.json"
+            f"steamspy/raw/request={request_type}/run_id={run_id}/page={page:04d}.json"
         )
+
         upload_to_minio(
             bucket=bucket,
             object_name=object_name,
             raw_bytes=response.content,
             content_type="application/json",
         )
+        
         pages_uploaded += 1
 
         page += 1

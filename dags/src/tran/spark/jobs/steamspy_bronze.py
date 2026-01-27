@@ -1,10 +1,10 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import current_timestamp, date, lit, col, udf
+from src.tran.spark.utils.session import build_spark_session
+from pyspark.sql.functions import current_timestamp, date, lit, col, udf, input_file_name
 from pyspark.sql.types import StringType, IntegerType
 import re
 
 def main():
-    spark = SparkSession.builder.appName("steamspy-bronze").getOrCreate()
+    spark = build_spark_session("steamspy-bronze")
     
     # run_id keeps each Airflow run's data in its own folder.
     run_id = spark.sparkContext.getConf().get("spark.steamspy.run_id")
@@ -13,19 +13,14 @@ def main():
             "run_id is required. Pass spark.steamspy.run_id in Spark config."
         )
     
-    # Read landing JSON files as raw text (one row per file)
-    landing_path = f"s3a://bronze/landing/steamspy/request=all/run_id={run_id}/"
+    landing_path = f"s3a://bronze/steamspy/raw/request=all/run_id={run_id}/"
     
-    # Read as text files - this gives us a 'value' column with the file content
+    # There is a file for each page from the API call full of JSON. Create a
+    # df that creates one column leaving the JSON as text for now
     df = spark.read.text(landing_path)
     
     # Rename 'value' to 'payload' for clarity
     df = df.withColumnRenamed("value", "payload")
-    
-    # Extract page number from path for traceability
-    # Path format: landing/steamspy/request=all/run_id={run_id}/page=0000.json
-    # Note: when reading with text(), we don't have path info, so we'll extract from input_file_name()
-    from pyspark.sql.functions import input_file_name
     
     def extract_page(path):
         if path:
@@ -35,7 +30,6 @@ def main():
     
     extract_page_udf = udf(extract_page, IntegerType())
     
-    # Add metadata columns
     df = (
         df.withColumn("source_file", input_file_name())
           .withColumn("page", extract_page_udf(col("source_file")))
@@ -45,7 +39,6 @@ def main():
           .withColumn("run_id", lit(run_id))
     )
     
-    # Select final columns: payload + metadata
     df_final = df.select(
         "payload",
         "ingestion_timestamp",
@@ -56,8 +49,7 @@ def main():
         "source_file"
     )
     
-    # Write to bronze layer as Parquet
-    bronze_output_path = f"s3a://bronze/bronze/steamspy/run_id={run_id}/"
+    bronze_output_path = f"s3a://bronze/steamspy/normalized/run_id={run_id}/"
     df_final.write.mode("overwrite").parquet(bronze_output_path)
     
     spark.stop()

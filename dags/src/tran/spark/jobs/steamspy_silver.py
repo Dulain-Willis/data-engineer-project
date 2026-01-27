@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession
+from src.tran.spark.utils.session import build_spark_session
 from pyspark.sql.functions import from_json, explode, col, get_json_object, regexp_extract
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, MapType
 
@@ -24,7 +24,7 @@ schema = StructType([
 
 
 def main():
-    spark = SparkSession.builder.appName("steamspy-silver").getOrCreate()
+    spark = build_spark_session("steamspy-silver")
     
     # Get run_id from Spark config
     run_id = spark.sparkContext.getConf().get("spark.steamspy.run_id")

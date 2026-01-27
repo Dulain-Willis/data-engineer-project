@@ -29,7 +29,7 @@ def steamspy():
     
     bronze = SparkSubmitOperator(
         task_id="bronze",
-        application="/opt/airflow/dags/src/tran/spark_jobs/steamspy_bronze.py",
+        application="/opt/airflow/dags/src/tran/spark/jobs/steamspy_bronze.py",
         conn_id="spark_default",
         conf={
             **get_s3a_conf(),
@@ -40,7 +40,7 @@ def steamspy():
     
     silver = SparkSubmitOperator(
         task_id="silver",
-        application="/opt/airflow/dags/src/tran/spark_jobs/steamspy_silver.py",
+        application="/opt/airflow/dags/src/tran/spark/jobs/steamspy_silver.py",
         conn_id="spark_default",
         conf={
             **get_s3a_conf(),
