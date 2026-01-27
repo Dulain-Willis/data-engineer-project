@@ -1,10 +1,10 @@
-module "raw_bucket" {
+module "bronze_bucket" {
   source = "./modules/minio-bucket"
 
-  bucket_name = "${var.project}-${var.environment}-raw"
+  bucket_name = "bronze"
 }
 
 module "silver_bucket" {
   source      = "./modules/minio-bucket"
-  bucket_name = "${var.project}-${var.environment}-silver"
+  bucket_name = "silver"
 }
