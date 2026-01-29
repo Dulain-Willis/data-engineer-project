@@ -7,7 +7,7 @@ url = "https://steamspy.com/api.php"
 
 request_type = "all"
 
-def call_steamspy_api(bucket: str, run_id: str) -> int:
+def call_steamspy_api(bucket: str, ds: str, run_id: str) -> int:
     pages_uploaded = 0
     page = 0
 
@@ -32,7 +32,7 @@ def call_steamspy_api(bucket: str, run_id: str) -> int:
             break
 
         object_name = (
-            f"steamspy/raw/request={request_type}/run_id={run_id}/page={page:04d}.json"
+            f"steamspy/raw/request={request_type}/dt={ds}/run_id={run_id}/page={page:04d}.json"
         )
 
         upload_to_minio(

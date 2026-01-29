@@ -20,9 +20,10 @@ def steamspy():
     @task
     def extract():
         ctx = get_current_context()
+        ds = ctx["ds"]
         run_id = ctx["run_id"]
-        pages_uploaded = call_steamspy_api(bucket=bucket_name, run_id=run_id)
-        return {"run_id": run_id, "pages_uploaded": pages_uploaded}
+        pages_uploaded = call_steamspy_api(bucket=bucket_name, ds=ds, run_id=run_id)
+        return {"ds": ds, "run_id": run_id, "pages_uploaded": pages_uploaded}
 
     # Get run_id from extract task for Spark jobs
     extract_task = extract()
@@ -34,6 +35,7 @@ def steamspy():
         conf={
             **get_s3a_conf(),
             **get_spark_resource_conf(),
+            "spark.steamspy.ds": "{{ ds }}",
             "spark.steamspy.run_id": "{{ run_id }}",
         },
     )
@@ -45,6 +47,7 @@ def steamspy():
         conf={
             **get_s3a_conf(),
             **get_spark_resource_conf(),
+            "spark.steamspy.ds": "{{ ds }}",
             "spark.steamspy.run_id": "{{ run_id }}",
         },
     )
