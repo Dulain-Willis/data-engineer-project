@@ -1,5 +1,5 @@
 from src.tran.spark.utils.session import build_spark_session
-from pyspark.sql.functions import current_timestamp, to_date, lit, col, udf, input_file_name
+from pyspark.sql.functions import current_timestamp, to_date, lit, udf, input_file_name
 from pyspark.sql.types import StringType, IntegerType
 import re
 
@@ -11,24 +11,28 @@ def main():
 
     landing_path = f"s3a://bronze/steamspy/raw/request=all/dt={ds}/run_id={run_id}/"
     
-    # There is a file for each page from the API call full of JSON. Create a
-    # df that creates one column leaving the JSON as text for now
+    # Read each full page of JSON from the API call as one huge string of text
     df = spark.read.text(landing_path, wholetext=True)
     
-    # Rename 'value' to 'payload' for clarity
+    # Rename the column with the JSON text from the default 'value' to 'payload'
     df = df.withColumnRenamed("value", "payload")
     
+    # Treating the following as a raw string using r' meaning treat \'s literally find the literal text 'page=' and
+    # then create a capture group () to mark what we want to extract. Match any digit \d specifically one or more +
+    # and then the literal text .json with \.json to show it's a literal . not "any character"
     def extract_page(path):
-        if path:
-            match = re.search(r'page=(\d+)\.json', path)
-            return int(match.group(1)) if match else None
-        return None
+        if not path:
+            raise ValueError("File path is None or empty")
+        match = re.search(r'page=(\d+)\.json', path)
+        if not match:
+            raise ValueError(f"Could not extract page number from: {path}")
+        return int(match.group(1))
     
     extract_page_udf = udf(extract_page, IntegerType())
     
     df = (
         df.withColumn("source_file", input_file_name())
-          .withColumn("page", extract_page_udf(col("source_file")))
+          .withColumn("page", extract_page_udf("source_file"))
           .withColumn("ingestion_timestamp", current_timestamp())
           .withColumn("ingestion_date", to_date("ingestion_timestamp"))
           .withColumn("source", lit("steamspy"))

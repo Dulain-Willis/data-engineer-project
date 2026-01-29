@@ -1,9 +1,9 @@
 from src.tran.spark.utils.session import build_spark_session
-from pyspark.sql.functions import from_json, explode, col, lit, row_number
+from pyspark.sql.functions import from_json, explode, col, lit, row_number, desc
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, MapType
 from pyspark.sql.window import Window
 
-game_schema = StructType([
+app_schema = StructType([
     StructField("appid", IntegerType(), True),
     StructField("name", StringType(), True),
     StructField("developer", StringType(), True),
@@ -28,19 +28,18 @@ def main():
     spark = build_spark_session("steamspy-silver")
 
     ds = spark.conf.get("spark.steamspy.ds")
-    run_id = spark.conf.get("spark.steamspy.run_id")
 
     bronze_path = f"s3a://bronze/steamspy/normalized/dt={ds}/"
     df_bronze = spark.read.parquet(bronze_path)
 
-    json_map = MapType(StringType(), StructType(game_schema))
+    json_map = MapType(StringType(), StructType(app_schema))
 
     # Takes the payload column and makes the id a string and casts the value (json payload) to a struct from a string
     df_parsed = (
         df_bronze
         .withColumn(
             "struct_payload",
-            from_json(col("payload"), json_map)
+            from_json("payload", json_map)
         )
     )
 
@@ -48,9 +47,9 @@ def main():
     df_exploded = (
         df_parsed
         .select(
-            explode(col("struct_payload")).alias("appid_key", "game"),
-            col("ingestion_timestamp"),
-            col("run_id"),
+            explode("struct_payload").alias("appid_key", "game"),
+            "ingestion_timestamp",
+            "run_id",
         )
     )
 
@@ -59,15 +58,42 @@ def main():
         df_exploded
         .select(
             col("game.*"),
-            col("run_id"),
-            col("ingestion_timestamp"),
+            "run_id",
+            "ingestion_timestamp",
         )
     )
 
-    window = Window.partitionBy("appid").orderBy(col("ingestion_timestamp").desc())
-    df_deduped = df_flattened.withColumn("rn", row_number().over(window)).filter(col("rn") == 1).drop("rn")
+    window = Window.partitionBy("appid").orderBy(desc("ingestion_timestamp"))
 
-    df_final = df_deduped.withColumn("dt", lit(ds))
+    df_deduped = (
+        df_flattened
+        .withColumn("rn", row_number().over(window))
+        .filter(col("rn") == 1).drop("rn")
+        .withColumn("dt", lit(ds))
+    )
+
+    df_final = df_deduped.select(
+        "appid",
+        "name",
+        "developer",
+        "publisher",
+        "score_rank",
+        "positive",
+        "negative",
+        "userscore",
+        "owners",
+        "average_forever",
+        "average_2weeks",
+        "median_forever",
+        "median_2weeks",
+        "ccu",
+        "price",
+        "initialprice",
+        "discount",
+        "run_id",
+        "ingestion_timestamp",
+        "dt",
+    )
 
     output_path = f"s3a://silver/steamspy/dt={ds}/"
     df_final.write.mode("overwrite").parquet(output_path)
