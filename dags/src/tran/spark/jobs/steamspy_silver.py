@@ -33,27 +33,39 @@ def main():
     bronze_path = f"s3a://bronze/steamspy/normalized/dt={ds}/"
     df_bronze = spark.read.parquet(bronze_path)
 
-    map_schema = MapType(StringType(), StructType(game_schema))
+    json_map = MapType(StringType(), StructType(game_schema))
 
-    df_parsed = df_bronze.withColumn(
-        "games_map",
-        from_json(col("payload"), map_schema)
+    # Takes the payload column and makes the id a string and casts the value (json payload) to a struct from a string
+    df_parsed = (
+        df_bronze
+        .withColumn(
+            "struct_payload",
+            from_json(col("payload"), json_map)
+        )
     )
 
-    df_exploded = df_parsed.select(
-        explode(col("games_map")).alias("appid_key", "game"),
-        col("ingestion_timestamp"),
-        col("run_id"),
+    # Takes what was a huge string (now struct) of JSON and makes each row its own JSON entry for an appid
+    df_exploded = (
+        df_parsed
+        .select(
+            explode(col("struct_payload")).alias("appid_key", "game"),
+            col("ingestion_timestamp"),
+            col("run_id"),
+        )
     )
 
-    df_games = df_exploded.select(
-        col("game.*"),
-        col("run_id"),
-        col("ingestion_timestamp"),
+    # Goes to each row and unnests each JSON entry into actual columns
+    df_flattened = (
+        df_exploded
+        .select(
+            col("game.*"),
+            col("run_id"),
+            col("ingestion_timestamp"),
+        )
     )
 
     window = Window.partitionBy("appid").orderBy(col("ingestion_timestamp").desc())
-    df_deduped = df_games.withColumn("rn", row_number().over(window)).filter(col("rn") == 1).drop("rn")
+    df_deduped = df_flattened.withColumn("rn", row_number().over(window)).filter(col("rn") == 1).drop("rn")
 
     df_final = df_deduped.withColumn("dt", lit(ds))
 
