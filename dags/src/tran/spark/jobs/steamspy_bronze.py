@@ -40,15 +40,17 @@ def main():
           .withColumn("dt", lit(ds))
     )
     
-    df_final = df.select(
-        "payload",
-        "ingestion_timestamp",
-        "ingestion_date",
-        "source",
-        "run_id",
-        "dt",
-        "page",
-        "source_file"
+    df_final = (
+        df.select(
+            "payload",
+            "ingestion_timestamp",
+            "ingestion_date",
+            "source",
+            "run_id",
+            "dt",
+            "page",
+            "source_file"
+        )
     )
     
     bronze_output_path = f"s3a://bronze/steamspy/normalized/dt={ds}/"

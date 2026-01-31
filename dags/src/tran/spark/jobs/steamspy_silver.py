@@ -72,27 +72,29 @@ def main():
         .withColumn("dt", lit(ds))
     )
 
-    df_final = df_deduped.select(
-        "appid",
-        "name",
-        "developer",
-        "publisher",
-        "score_rank",
-        "positive",
-        "negative",
-        "userscore",
-        "owners",
-        "average_forever",
-        "average_2weeks",
-        "median_forever",
-        "median_2weeks",
-        "ccu",
-        "price",
-        "initialprice",
-        "discount",
-        "run_id",
-        "ingestion_timestamp",
-        "dt",
+    df_final = (
+        df_deduped.select(
+            "appid",
+            "name",
+            "developer",
+            "publisher",
+            "score_rank",
+            "positive",
+            "negative",
+            "userscore",
+            "owners",
+            "average_forever",
+            "average_2weeks",
+            "median_forever",
+            "median_2weeks",
+            "ccu",
+            "price",
+            "initialprice",
+            "discount",
+            "run_id",
+            "ingestion_timestamp",
+            "dt",
+        )
     )
 
     output_path = f"s3a://silver/steamspy/dt={ds}/"

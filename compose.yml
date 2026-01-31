@@ -39,6 +39,11 @@ services:
     volumes:
       - ./.mnt/minio:/data
 
+  clickhouse:
+  #Analytics Warehouse
+  image: clickhouse:25.11.8.25-jammy
+  container_name: clickhouse 
+  
   mc:
   #cli for interacting with minio
     image: minio/mc
