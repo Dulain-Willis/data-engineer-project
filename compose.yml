@@ -13,6 +13,7 @@ x-airflow-common: &airflow-common
     - ./dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
+    - ./spark_jobs:/opt/airflow/spark_jobs
 
 services:
 

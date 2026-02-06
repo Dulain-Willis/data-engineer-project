@@ -1,11 +1,13 @@
 import requests
 import time
 from requests.exceptions import RequestException
-from src.load.minio_loader import upload_to_minio
+
+from pipelines.common.storage.minio_loader import upload_to_minio
 
 url = "https://steamspy.com/api.php"
 
 request_type = "all"
+
 
 def call_steamspy_api(bucket: str, ds: str, run_id: str) -> int:
     pages_uploaded = 0
@@ -41,7 +43,7 @@ def call_steamspy_api(bucket: str, ds: str, run_id: str) -> int:
             raw_bytes=response.content,
             content_type="application/json",
         )
-        
+
         pages_uploaded += 1
 
         page += 1

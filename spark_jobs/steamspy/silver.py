@@ -1,4 +1,4 @@
-from src.tran.spark.utils.session import build_spark_session
+from pipelines.common.spark.session import build_spark_session
 from pyspark.sql.functions import from_json, explode, col, lit, row_number, desc
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, MapType
 from pyspark.sql.window import Window
@@ -101,6 +101,7 @@ def main():
     df_final.write.mode("overwrite").parquet(output_path)
 
     spark.stop()
+
 
 if __name__ == "__main__":
     main()

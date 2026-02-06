@@ -3,10 +3,11 @@ from airflow.operators.python import get_current_context
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from datetime import datetime
 
-from src.extr.steamspy_api import call_steamspy_api
-from src.tran.spark.spark_conf import get_s3a_conf, get_spark_resource_conf
+from pipelines.steamspy.extract import call_steamspy_api
+from pipelines.common.spark.config import get_s3a_conf, get_spark_resource_conf
 
 bucket_name = 'bronze'
+
 
 @dag(
     dag_id="steamspy",
@@ -27,10 +28,10 @@ def steamspy():
 
     # Get run_id from extract task for Spark jobs
     extract_task = extract()
-    
+
     bronze = SparkSubmitOperator(
         task_id="bronze",
-        application="/opt/airflow/dags/src/tran/spark/jobs/steamspy_bronze.py",
+        application="/opt/airflow/spark_jobs/steamspy/bronze.py",
         conn_id="spark_default",
         conf={
             **get_s3a_conf(),
@@ -39,10 +40,10 @@ def steamspy():
             "spark.steamspy.run_id": "{{ run_id }}",
         },
     )
-    
+
     silver = SparkSubmitOperator(
         task_id="silver",
-        application="/opt/airflow/dags/src/tran/spark/jobs/steamspy_silver.py",
+        application="/opt/airflow/spark_jobs/steamspy/silver.py",
         conn_id="spark_default",
         conf={
             **get_s3a_conf(),
@@ -54,5 +55,6 @@ def steamspy():
 
     # Pipeline: extract >> bronze >> silver
     extract_task >> bronze >> silver
+
 
 dag = steamspy()

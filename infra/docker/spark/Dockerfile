@@ -7,3 +7,12 @@ RUN curl -fL --progress-bar https://repo1.maven.org/maven2/org/apache/hadoop/had
     -o /opt/spark/jars/hadoop-aws-3.3.4.jar && \
     curl -fL --progress-bar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar \
     -o /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
+
+# Install pip and the pipeline package
+RUN apt-get update && apt-get install -y python3-pip && rm -rf /var/lib/apt/lists/*
+COPY pyproject.toml /opt/pipeline/
+COPY src/ /opt/pipeline/src/
+RUN pip3 install --no-cache-dir /opt/pipeline/
+
+# Copy spark jobs
+COPY spark_jobs/ /opt/spark/jobs/

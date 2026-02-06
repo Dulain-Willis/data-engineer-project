@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
 
-from src.tran.spark.spark_conf import apply_s3a_conf
+from pipelines.common.spark.config import apply_s3a_conf
 
 
 def build_spark_session(app_name: str) -> SparkSession:

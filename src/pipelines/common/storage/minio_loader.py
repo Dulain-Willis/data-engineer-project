@@ -1,5 +1,7 @@
 from io import BytesIO
-from utils.minio_conn import minio_client
+
+from pipelines.common.storage.minio_client import minio_client
+
 
 def upload_to_minio(
     bucket: str,
