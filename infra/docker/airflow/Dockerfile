@@ -41,7 +41,7 @@ RUN curl -fL --progress-bar https://repo1.maven.org/maven2/org/apache/hadoop/had
 USER airflow
 ARG AIRFLOW_VERSION=2.10.3
 ARG PYTHON_VERSION=3.12
-RUN pip install --no-cache-dir apache-airflow==${AIRFLOW_VERSION} apache-airflow-providers-apache-spark pyspark==3.5.3 minio --constraint https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt
+RUN pip install --no-cache-dir apache-airflow==${AIRFLOW_VERSION} apache-airflow-providers-apache-spark pyspark==3.5.3 minio clickhouse-driver --constraint https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt
 
 # Copy and install the pipelines package
 COPY --chown=airflow:root pyproject.toml /opt/airflow/

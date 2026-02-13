@@ -5,6 +5,8 @@ from datetime import datetime
 
 from pipelines.steamspy.extract import call_steamspy_api
 from pipelines.common.spark.config import get_s3a_conf, get_spark_resource_conf
+from pipelines.common.clickhouse.client import get_client
+from pipelines.steamspy.load import load_partition
 
 bucket_name = 'bronze'
 
@@ -53,8 +55,19 @@ def steamspy():
         },
     )
 
-    # Pipeline: extract >> bronze >> silver
-    extract_task >> bronze >> silver
+    @task
+    def load_clickhouse():
+        ctx = get_current_context()
+        ds = ctx["ds"]
+        client = get_client()
+        s3_path = f"silver/steamspy/dt={ds}"
+        rows_loaded = load_partition(client, "steamspy_silver", s3_path, ds)
+        return {"ds": ds, "rows_loaded": rows_loaded}
+
+    load_ch = load_clickhouse()
+
+    # Pipeline: extract >> bronze >> silver >> load_clickhouse
+    extract_task >> bronze >> silver >> load_ch
 
 
 dag = steamspy()

@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: silver
+    database: analytics
+    tables:
+      - name: steamspy_silver
+        description: "SteamSpy silver layer loaded from MinIO"
