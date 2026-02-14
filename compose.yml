@@ -60,7 +60,21 @@ services:
       nofile:
         soft: 262144
         hard: 262144
-  
+
+  tabix:
+  #Web UI for ClickHouse analytics
+    image: spoonest/clickhouse-tabix-web-client:stable
+    container_name: tabix
+    environment:
+      CH_NAME: ClickHouse
+      CH_HOST: localhost:8123
+      CH_LOGIN: clickhouse
+      CH_PASSWORD: clickhouse
+    ports:
+      - "8888:80"
+    depends_on:
+      - clickhouse
+
   mc:
   #CLI for interacting with minio
     image: minio/mc
