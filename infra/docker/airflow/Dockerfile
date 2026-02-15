@@ -7,6 +7,7 @@ RUN apt-get install -y --no-install-recommends openjdk-17-jre-headless
 RUN apt-get install -y --no-install-recommends procps
 RUN apt-get install -y --no-install-recommends curl
 RUN apt-get install -y --no-install-recommends ca-certificates
+RUN apt-get install -y --no-install-recommends gosu
 
 # deletes downloaded package indexes to reduce image size
 RUN apt-get clean
