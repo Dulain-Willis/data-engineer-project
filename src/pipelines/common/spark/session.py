@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
 
-from pipelines.common.spark.config import apply_s3a_conf
+from pipelines.common.spark.config import apply_s3a_conf, get_iceberg_catalog_conf
 
 
 def build_spark_session(app_name: str) -> SparkSession:
@@ -14,6 +14,10 @@ def build_spark_session(app_name: str) -> SparkSession:
 
     conf = SparkConf()
     apply_s3a_conf(conf)
+
+    # Add Iceberg catalog configuration
+    for key, value in get_iceberg_catalog_conf().items():
+        conf.set(key, value)
 
     builder = SparkSession.builder.appName(app_name).config(conf=conf)
     if spark_master_url:

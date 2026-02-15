@@ -97,8 +97,24 @@ def main():
         )
     )
 
-    output_path = f"s3a://silver/steamspy/dt={ds}/"
-    df_final.write.mode("overwrite").parquet(output_path)
+    # Write to Iceberg table with atomic commits
+    table_name = "iceberg.steamspy.games"
+
+    # Check if table exists, create if not
+    if not spark.catalog.tableExists(table_name):
+        print(f"Creating Iceberg table: {table_name}")
+        (df_final.writeTo(table_name)
+            .partitionedBy("dt")
+            .create())
+    else:
+        # Overwrite partitions for current dt (SCD Type 1)
+        print(f"Overwriting Iceberg table: {table_name}")
+        (df_final.writeTo(table_name)
+            .overwritePartitions())
+
+    # Verify write
+    count = spark.table(table_name).filter(col("dt") == ds).count()
+    print(f"Iceberg table {table_name} contains {count} rows for dt={ds}")
 
     spark.stop()
 

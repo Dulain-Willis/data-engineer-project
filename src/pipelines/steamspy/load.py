@@ -16,8 +16,12 @@ def load_partition(client: Client, table: str, s3_path: str, dt: str) -> int:
     """
     Loads steamspy partition from MinIO parquet into ClickHouse.
     Returns the number of rows inserted.
+    Note: s3_path parameter is now ignored - using Iceberg data path directly.
     """
     delete_partition(client, table, dt)
+
+    # Use Iceberg data directory in silver bucket
+    iceberg_data_path = f"silver/iceberg/steamspy/games/data/dt={dt}"
 
     insert_query = f"""
     INSERT INTO {table}
@@ -43,7 +47,7 @@ def load_partition(client: Client, table: str, s3_path: str, dt: str) -> int:
         ingestion_timestamp,
         dt
     FROM s3(
-        'http://{minio_endpoint}/{s3_path}/*.parquet',
+        'http://{minio_endpoint}/{iceberg_data_path}/*.parquet',
         '{minio_access_key}',
         '{minio_secret_key}',
         'Parquet'

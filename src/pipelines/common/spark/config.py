@@ -35,3 +35,28 @@ def get_spark_resource_conf() -> dict:
         "spark.executor.memoryOverhead": "384m",
         "spark.sql.shuffle.partitions": "8",  # Reduce from default 200
     }
+
+
+def get_iceberg_catalog_conf() -> dict:
+    # Returns Iceberg REST catalog configuration for Spark
+    iceberg_rest_uri = os.getenv("ICEBERG_REST_URI", "http://iceberg-rest:8181")
+
+    return {
+        # Catalog registration
+        "spark.sql.catalog.iceberg": "org.apache.iceberg.spark.SparkCatalog",
+        "spark.sql.catalog.iceberg.type": "rest",
+        "spark.sql.catalog.iceberg.uri": iceberg_rest_uri,
+
+        # Storage configuration - uses existing silver bucket with /iceberg/ prefix
+        "spark.sql.catalog.iceberg.warehouse": "s3a://silver/iceberg/",
+
+        # S3/MinIO integration
+        "spark.sql.catalog.iceberg.io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
+        "spark.sql.catalog.iceberg.s3.endpoint": MINIO_ENDPOINT,
+        "spark.sql.catalog.iceberg.s3.access-key-id": MINIO_ACCESS_KEY,
+        "spark.sql.catalog.iceberg.s3.secret-access-key": MINIO_SECRET_KEY,
+        "spark.sql.catalog.iceberg.s3.path-style-access": "true",
+
+        # Performance tuning
+        "spark.sql.catalog.iceberg.cache-enabled": "false",  # Disable for dev simplicity
+    }
