@@ -4,12 +4,6 @@
 
 The SteamSpy pipeline has been optimized for rapid development iteration. The key improvement is **decoupling extraction from transformation**, allowing you to re-run Spark jobs without waiting 1+ hour for API extraction.
 
-## Problem This Solves
-
-**Before**: Any failure in `bronze`, `silver`, or `load_clickhouse` tasks required re-running the entire pipeline, including the slow extraction step (~1 hour due to 60s API rate limiting).
-
-**After**: Extraction is skipped by default. You can iterate on Spark transformations and ClickHouse loading using existing bronze data.
-
 ---
 
 ## Quick Reference
@@ -25,8 +19,7 @@ docker exec airflow-scheduler airflow dags trigger steamspy
 
 **What happens**:
 - `should_extract` task returns `False` → `extract` task is skipped
-- `bronze` → `silver` → `load_clickhouse` run against existing data
-- Total runtime: ~5-10 minutes (vs. 1+ hour with extraction)
+- Rest of the pipeline runs against existing data
 
 ### Force Re-Extraction (When You Need Fresh Data)
 
@@ -40,7 +33,6 @@ docker exec airflow-scheduler airflow dags trigger steamspy --conf '{"force_refr
 **What happens**:
 - All tasks run, including extraction
 - New bronze data is created with current `ds` (execution date)
-- Total runtime: ~1 hour
 
 ---
 

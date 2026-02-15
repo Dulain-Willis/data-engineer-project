@@ -1,6 +1,6 @@
 import requests
 import time
-from requests.exceptions import RequestException
+from requests.exceptions import RequestException, JSONDecodeError
 
 from pipelines.common.storage.minio_loader import upload_to_minio
 
@@ -22,11 +22,22 @@ def call_steamspy_api(bucket: str, ds: str, run_id: str) -> int:
             }
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
+
             print(f"Successful Request for page {page}")
+
+            # Check for empty response (end of pagination)
+            if not response.content:
+                print(f"End of pagination reached at page {page}.")
+                break
+
             data = response.json()
 
+        except JSONDecodeError as e:
+            print(f"Invalid JSON received on page {page}. Ending extraction.")
+            break
+
         except RequestException as e:
-            print("Network error:", e)
+            print(f"Network error on page {page}: {e}")
             break
 
         if not data:
