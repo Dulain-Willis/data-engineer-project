@@ -40,15 +40,61 @@ def steamspy():
     should_extract = ShortCircuitOperator(
         task_id="should_extract",
         python_callable=check_should_extract,
+        ignore_downstream_trigger_rules=False,  # Allow downstream tasks to use their trigger rules
+    )
+
+    # Initialize extraction metadata table (idempotent - createOrReplace)
+    init_metadata = SparkSubmitOperator(
+        task_id='init_extraction_metadata',
+        application='/opt/spark/jobs/steamspy/init_extraction_metadata.py',
+        conn_id='spark_default',
+        conf={
+            **get_s3a_conf(),
+            **get_spark_resource_conf(),
+            **get_iceberg_catalog_conf(),
+        },
+        trigger_rule='none_failed',  # Run if not already initialized
     )
 
     @task
     def extract():
+        """Extract data from SteamSpy API and register batch metadata."""
+        from pyspark.sql import SparkSession
+        from spark_jobs.steamspy.extraction_metadata import register_extraction
+        import time
+
         ctx = get_current_context()
         ds = ctx["ds"]
         run_id = ctx["run_id"]
-        pages_uploaded = call_steamspy_api(bucket=bucket_name, ds=ds, run_id=run_id)
-        return {"ds": ds, "run_id": run_id, "pages_uploaded": pages_uploaded}
+
+        start_time = time.time()
+
+        try:
+            # Call existing extraction logic
+            pages_uploaded = call_steamspy_api(bucket=bucket_name, ds=ds, run_id=run_id)
+
+            extraction_duration = int(time.time() - start_time)
+
+            # Register successful extraction in metadata
+            spark = SparkSession.builder.appName("register-extraction").getOrCreate()
+            register_extraction(
+                spark=spark,
+                dt=ds,
+                run_id=run_id,
+                status="SUCCESS",
+                pages_extracted=pages_uploaded,
+                extraction_duration_seconds=extraction_duration
+            )
+            spark.stop()
+
+            return {"ds": ds, "run_id": run_id, "pages_uploaded": pages_uploaded}
+
+        except Exception as e:
+            # Register failed extraction
+            spark = SparkSession.builder.appName("register-extraction").getOrCreate()
+            register_extraction(spark=spark, dt=ds, run_id=run_id, status="FAILED")
+            spark.stop()
+            raise
 
     # Get run_id from extract task for Spark jobs
     extract_task = extract()
@@ -60,9 +106,11 @@ def steamspy():
         conf={
             **get_s3a_conf(),
             **get_spark_resource_conf(),
+            **get_iceberg_catalog_conf(),  # Bronze now queries metadata table
             "spark.steamspy.ds": "{{ ds }}",
             "spark.steamspy.run_id": "{{ run_id }}",
         },
+        trigger_rule="none_failed_min_one_success",  # Run even if extract is skipped
     )
 
     silver = SparkSubmitOperator(
@@ -76,9 +124,10 @@ def steamspy():
             "spark.steamspy.ds": "{{ ds }}",
             "spark.steamspy.run_id": "{{ run_id }}",
         },
+        trigger_rule="none_failed_min_one_success",  # Continue even if extract/bronze skipped/failed
     )
 
-    @task
+    @task(trigger_rule="none_failed_min_one_success")  # Run even if upstream tasks skipped
     def load_clickhouse():
         ctx = get_current_context()
         ds = ctx["ds"]
@@ -89,8 +138,11 @@ def steamspy():
 
     load_ch = load_clickhouse()
 
-    # Pipeline: should_extract >> extract >> bronze >> silver >> load_clickhouse
+    # Pipeline with metadata initialization and decoupled bronze processing
+    # Bronze can run even if extraction is skipped (discovers run_id via metadata)
+    init_metadata >> should_extract
     should_extract >> extract_task >> bronze >> silver >> load_ch
+    should_extract >> bronze  # Bronze can run even if extraction skipped
 
 
 dag = steamspy()

@@ -14,7 +14,7 @@ RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
 # where Java is installed inside airflow container
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 ARG SPARK_VERSION=3.5.3
 
@@ -38,6 +38,19 @@ RUN curl -fL --progress-bar https://repo1.maven.org/maven2/org/apache/hadoop/had
     -o /opt/spark/jars/hadoop-aws-3.3.4.jar && \
     curl -fL --progress-bar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar \
     -o /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
+
+# Download Iceberg Spark runtime JAR (includes iceberg-aws module with S3FileIO)
+RUN curl -fL --progress-bar \
+    https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.5.2/iceberg-spark-runtime-3.5_2.12-1.5.2.jar \
+    -o /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.5.2.jar
+
+# Download AWS SDK v2 JARs (required by Iceberg S3FileIO)
+RUN curl -fL --progress-bar \
+    https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.20.18/bundle-2.20.18.jar \
+    -o /opt/spark/jars/aws-java-sdk-bundle-v2-2.20.18.jar && \
+    curl -fL --progress-bar \
+    https://repo1.maven.org/maven2/software/amazon/awssdk/url-connection-client/2.20.18/url-connection-client-2.20.18.jar \
+    -o /opt/spark/jars/url-connection-client-2.20.18.jar
 
 USER airflow
 ARG AIRFLOW_VERSION=2.10.3

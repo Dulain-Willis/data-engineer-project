@@ -1,6 +1,7 @@
 from pipelines.common.spark.session import build_spark_session
 from pyspark.sql.functions import current_timestamp, to_date, lit, udf, input_file_name
 from pyspark.sql.types import IntegerType
+from extraction_metadata import get_raw_data_path
 import re
 
 
@@ -8,9 +9,13 @@ def main():
     spark = build_spark_session("steamspy-bronze")
 
     ds = spark.conf.get("spark.steamspy.ds")
-    run_id = spark.conf.get("spark.steamspy.run_id")
+    current_run_id = spark.conf.get("spark.steamspy.run_id")  # For lineage only
 
-    landing_path = f"s3a://bronze/steamspy/raw/request=all/dt={ds}/run_id={run_id}/"
+    # Discover which run_id to process (latest successful extraction)
+    landing_path = get_raw_data_path(spark, dt=ds)  # Discovers run_id automatically
+
+    # Extract actual run_id from path for lineage tracking
+    extraction_run_id = landing_path.split("run_id=")[1].rstrip("/")
 
     # Read each full page of JSON from the API call as one huge string of text
     df = spark.read.text(landing_path, wholetext=True)
@@ -37,7 +42,8 @@ def main():
           .withColumn("ingestion_timestamp", current_timestamp())
           .withColumn("ingestion_date", to_date("ingestion_timestamp"))
           .withColumn("source", lit("steamspy"))
-          .withColumn("run_id", lit(run_id))
+          .withColumn("extraction_run_id", lit(extraction_run_id))  # Which batch was source
+          .withColumn("bronze_run_id", lit(current_run_id))  # Which bronze run processed it
           .withColumn("dt", lit(ds))
     )
 
@@ -47,7 +53,8 @@ def main():
             "ingestion_timestamp",
             "ingestion_date",
             "source",
-            "run_id",
+            "extraction_run_id",
+            "bronze_run_id",
             "dt",
             "page",
             "source_file"

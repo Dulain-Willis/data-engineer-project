@@ -8,26 +8,22 @@ The SteamSpy pipeline has been optimized for rapid development iteration. The ke
 
 ## Quick Reference
 
-### Run Transformation Tasks Only (Default Behavior)
+### Run Pipeline Skipping Extraction (Default Behavior)
 
 ```bash
 # Skips extraction, reuses existing bronze data
 docker exec airflow-scheduler airflow dags trigger steamspy
-
-# Or via web UI: Trigger DAG (force_refresh checkbox unchecked)
 ```
 
 **What happens**:
 - `should_extract` task returns `False` → `extract` task is skipped
 - Rest of the pipeline runs against existing data
 
-### Force Re-Extraction (When You Need Fresh Data)
+### Run Pipeline Including Extraction (Full Refresh)
 
 ```bash
 # Forces full extraction from SteamSpy API
 docker exec airflow-scheduler airflow dags trigger steamspy --conf '{"force_refresh": true}'
-
-# Or via web UI: Trigger DAG → Check "force_refresh" parameter
 ```
 
 **What happens**:
