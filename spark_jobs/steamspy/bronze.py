@@ -1,7 +1,6 @@
 from pipelines.common.spark.session import build_spark_session
 from pyspark.sql.functions import current_timestamp, to_date, lit, udf, input_file_name
 from pyspark.sql.types import IntegerType
-from extraction_metadata import get_raw_data_path
 import re
 
 
@@ -9,23 +8,14 @@ def main():
     spark = build_spark_session("steamspy-bronze")
 
     ds = spark.conf.get("spark.steamspy.ds")
-    current_run_id = spark.conf.get("spark.steamspy.run_id")  # For lineage only
+    run_id = spark.conf.get("spark.steamspy.run_id")
 
-    # Discover which run_id to process (latest successful extraction)
-    landing_path = get_raw_data_path(spark, dt=ds)  # Discovers run_id automatically
+    landing_path = f"s3a://bronze/steamspy/raw/request=all/dt={ds}/"
 
-    # Extract actual run_id from path for lineage tracking
-    extraction_run_id = landing_path.split("run_id=")[1].rstrip("/")
-
-    # Read each full page of JSON from the API call as one huge string of text
     df = spark.read.text(landing_path, wholetext=True)
 
-    # Rename the column with the JSON text from the default 'value' to 'payload'
     df = df.withColumnRenamed("value", "payload")
 
-    # Treating the following as a raw string using r' meaning treat \'s literally find the literal text 'page=' and
-    # then create a capture group () to mark what we want to extract. Match any digit \d specifically one or more +
-    # and then the literal text .json with \.json to show it's a literal . not "any character"
     def extract_page(path):
         if not path:
             raise ValueError("File path is None or empty")
@@ -42,8 +32,7 @@ def main():
           .withColumn("ingestion_timestamp", current_timestamp())
           .withColumn("ingestion_date", to_date("ingestion_timestamp"))
           .withColumn("source", lit("steamspy"))
-          .withColumn("extraction_run_id", lit(extraction_run_id))  # Which batch was source
-          .withColumn("bronze_run_id", lit(current_run_id))  # Which bronze run processed it
+          .withColumn("run_id", lit(run_id))
           .withColumn("dt", lit(ds))
     )
 
@@ -53,16 +42,24 @@ def main():
             "ingestion_timestamp",
             "ingestion_date",
             "source",
-            "extraction_run_id",
-            "bronze_run_id",
+            "run_id",
             "dt",
             "page",
             "source_file"
         )
     )
 
-    bronze_output_path = f"s3a://bronze/steamspy/normalized/dt={ds}/"
-    df_final.write.mode("overwrite").parquet(bronze_output_path)
+    table_name = "iceberg.steamspy.raw"
+
+    if not spark.catalog.tableExists(table_name):
+        print(f"Creating Iceberg table: {table_name}")
+        df_final.writeTo(table_name).partitionedBy("dt").create()
+    else:
+        print(f"Overwriting Iceberg table partition dt={ds}: {table_name}")
+        df_final.writeTo(table_name).overwritePartitions()
+
+    count = spark.table(table_name).filter(df_final["dt"] == ds).count()
+    print(f"Iceberg table {table_name} contains {count} rows for dt={ds}")
 
     spark.stop()
 

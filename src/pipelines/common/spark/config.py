@@ -47,8 +47,8 @@ def get_iceberg_catalog_conf() -> dict:
         "spark.sql.catalog.iceberg.type": "rest",
         "spark.sql.catalog.iceberg.uri": iceberg_rest_uri,
 
-        # Storage configuration - uses existing silver bucket with /iceberg/ prefix
-        "spark.sql.catalog.iceberg.warehouse": "s3a://silver/iceberg/",
+        # Storage configuration - dedicated warehouse bucket for all Iceberg tables
+        "spark.sql.catalog.iceberg.warehouse": "s3a://warehouse/",
 
         # S3/MinIO integration
         "spark.sql.catalog.iceberg.io-impl": "org.apache.iceberg.aws.s3.S3FileIO",

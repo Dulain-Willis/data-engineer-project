@@ -29,8 +29,7 @@ def main():
 
     ds = spark.conf.get("spark.steamspy.ds")
 
-    bronze_path = f"s3a://bronze/steamspy/normalized/dt={ds}/"
-    df_bronze = spark.read.parquet(bronze_path)
+    df_bronze = spark.table("iceberg.steamspy.raw").filter(col("dt") == ds)
 
     json_map = MapType(StringType(), StructType(app_schema))
 

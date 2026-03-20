@@ -45,15 +45,25 @@ def call_steamspy_api(bucket: str, ds: str, run_id: str) -> int:
             break
 
         object_name = (
-            f"steamspy/raw/request={request_type}/dt={ds}/run_id={run_id}/page={page:04d}.json"
+            f"steamspy/raw/request={request_type}/dt={ds}/page={page:04d}.json"
         )
 
-        upload_to_minio(
-            bucket=bucket,
-            object_name=object_name,
-            raw_bytes=response.content,
-            content_type="application/json",
-        )
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                upload_to_minio(
+                    bucket=bucket,
+                    object_name=object_name,
+                    raw_bytes=response.content,
+                    content_type="application/json",
+                )
+                break
+            except Exception as e:
+                if attempt == max_retries:
+                    raise
+                wait = 2 ** attempt
+                print(f"Upload failed for page {page} (attempt {attempt}/{max_retries}): {e}. Retrying in {wait}s.")
+                time.sleep(wait)
 
         pages_uploaded += 1
 

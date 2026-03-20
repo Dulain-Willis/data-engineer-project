@@ -20,8 +20,8 @@ def load_partition(client: Client, table: str, s3_path: str, dt: str) -> int:
     """
     delete_partition(client, table, dt)
 
-    # Use Iceberg data directory in silver bucket
-    iceberg_data_path = f"silver/iceberg/steamspy/games/data/dt={dt}"
+    # Use Iceberg data directory in warehouse bucket
+    iceberg_data_path = f"warehouse/steamspy/games/data/dt={dt}"
 
     insert_query = f"""
     INSERT INTO {table}
