@@ -8,7 +8,7 @@ from pipelines.common.spark.config import get_s3a_conf, get_spark_resource_conf,
 from pipelines.common.clickhouse.client import get_client
 from pipelines.steamspy.load import load_partition
 
-bucket_name = 'bronze'
+bucket_name = 'landing'
 
 
 @dag(
@@ -86,8 +86,7 @@ def steamspy():
         ctx = get_current_context()
         ds = ctx["ds"]
         client = get_client()
-        s3_path = f"silver/steamspy/dt={ds}"
-        rows_loaded = load_partition(client, "steamspy_silver", s3_path, ds)
+        rows_loaded = load_partition(client, "steamspy_silver", ds)
         return {"ds": ds, "rows_loaded": rows_loaded}
 
     load_ch = load_clickhouse()

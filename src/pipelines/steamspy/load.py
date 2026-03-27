@@ -12,12 +12,8 @@ def delete_partition(client: Client, table: str, dt: str) -> None:
     client.execute(query, {"dt": dt})
 
 
-def load_partition(client: Client, table: str, s3_path: str, dt: str) -> int:
-    """
-    Loads steamspy partition from MinIO parquet into ClickHouse.
-    Returns the number of rows inserted.
-    Note: s3_path parameter is now ignored - using Iceberg data path directly.
-    """
+def load_partition(client: Client, table: str, dt: str) -> int:
+    """Loads steamspy partition from Iceberg warehouse parquet into ClickHouse."""
     delete_partition(client, table, dt)
 
     # Use Iceberg data directory in warehouse bucket

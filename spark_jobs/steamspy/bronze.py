@@ -10,7 +10,7 @@ def main():
     ds = spark.conf.get("spark.steamspy.ds")
     run_id = spark.conf.get("spark.steamspy.run_id")
 
-    landing_path = f"s3a://bronze/steamspy/raw/request=all/dt={ds}/"
+    landing_path = f"s3a://landing/steamspy/raw/request=all/dt={ds}/"
 
     df = spark.read.text(landing_path, wholetext=True)
 
