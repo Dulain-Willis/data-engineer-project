@@ -112,16 +112,41 @@ Airflow coordinates extraction, triggers Airbyte syncs, runs dbt models and test
 5. Configure Airbyte source and destination  
 6. Trigger the pipeline in Airflow  
 
-## Running the Pipeline
+## DAGs
 
-To trigger the full ELT flow in Airflow:
+### steamspy
 
-    airflow dags trigger steam_data_pipeline
+Ingests Steam game metadata through the full bronze → silver → ClickHouse pipeline.
 
-To run dbt manually:
+| Parameter | Default | Description |
+|---|---|---|
+| `force_refresh` | `false` | Re-extract from the Steam API (~1 hr). If false, skips extraction and runs transforms only (~5 min). |
 
-    dbt run
-    dbt test
+## Common Commands
+
+Trigger with extraction (full run, ~1 hour):
+
+    docker exec airflow-scheduler airflow dags trigger steamspy --conf '{"force_refresh": true}'
+
+Trigger transforms only (~5 minutes, uses existing landing data):
+
+    docker exec airflow-scheduler airflow dags trigger steamspy
+
+Unpause the DAG if it is paused:
+
+    docker exec airflow-scheduler airflow dags unpause steamspy
+
+Check run status:
+
+    docker exec airflow-scheduler airflow dags list-runs -d steamspy
+
+Check task states for a specific run:
+
+    docker exec airflow-scheduler airflow tasks states-for-dag-run steamspy <run_id>
+
+View logs for a specific task:
+
+    docker exec airflow-scheduler airflow tasks logs steamspy <task_id> <run_id>
 
 ## Data Models
 
