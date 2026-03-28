@@ -56,6 +56,7 @@ def get_iceberg_catalog_conf() -> dict:
         "spark.sql.catalog.iceberg.s3.access-key-id": MINIO_ACCESS_KEY,
         "spark.sql.catalog.iceberg.s3.secret-access-key": MINIO_SECRET_KEY,
         "spark.sql.catalog.iceberg.s3.path-style-access": "true",
+        "spark.sql.catalog.iceberg.s3.region": "us-east-1",  # Required by AWS SDK v2; MinIO ignores the value
 
         # Performance tuning
         "spark.sql.catalog.iceberg.cache-enabled": "false",  # Disable for dev simplicity

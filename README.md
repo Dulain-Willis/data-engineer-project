@@ -132,6 +132,12 @@ Trigger transforms only (~5 minutes, uses existing landing data):
 
     docker exec airflow-scheduler airflow dags trigger steamspy
 
+Re-run bronze/silver against a specific existing landing partition (e.g. if extract succeeded but bronze failed):
+
+    docker exec airflow-scheduler airflow dags trigger steamspy --logical-date 2026-03-28 --conf '{"force_refresh": false}'
+
+Replace `2026-03-28` with the date of the landing partition you want to process. This skips extraction and reads directly from `landing/steamspy/raw/request=all/dt=<date>/`.
+
 Unpause the DAG if it is paused:
 
     docker exec airflow-scheduler airflow dags unpause steamspy

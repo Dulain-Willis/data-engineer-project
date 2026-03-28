@@ -13,8 +13,9 @@ RUN apt-get install -y --no-install-recommends gosu
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
-# where Java is installed inside airflow container
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# Create arch-neutral symlink so JAVA_HOME works on both amd64 and arm64
+RUN ln -sf /usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture) /usr/lib/jvm/java-17-openjdk
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 
 ARG SPARK_VERSION=3.5.3
 

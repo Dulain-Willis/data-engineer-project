@@ -24,6 +24,14 @@ RUN curl -fL --progress-bar \
     https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.5.2/iceberg-spark-runtime-3.5_2.12-1.5.2.jar \
     -o /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.5.2.jar
 
+# Download AWS SDK v2 JARs (required by Iceberg S3FileIO on executors)
+RUN curl -fL --progress-bar \
+    https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.20.18/bundle-2.20.18.jar \
+    -o /opt/spark/jars/aws-java-sdk-bundle-v2-2.20.18.jar && \
+    curl -fL --progress-bar \
+    https://repo1.maven.org/maven2/software/amazon/awssdk/url-connection-client/2.20.18/url-connection-client-2.20.18.jar \
+    -o /opt/spark/jars/url-connection-client-2.20.18.jar
+
 # Install the pipeline package (pip already installed with Python 3.12)
 COPY pyproject.toml /opt/pipeline/
 COPY src/ /opt/pipeline/src/

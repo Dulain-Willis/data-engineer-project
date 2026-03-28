@@ -58,7 +58,7 @@ def main():
         print(f"Overwriting Iceberg table partition dt={ds}: {table_name}")
         df_final.writeTo(table_name).overwritePartitions()
 
-    count = spark.table(table_name).filter(df_final["dt"] == ds).count()
+    count = spark.table(table_name).filter(f"dt = '{ds}'").count()
     print(f"Iceberg table {table_name} contains {count} rows for dt={ds}")
 
     spark.stop()

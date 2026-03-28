@@ -8,6 +8,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/postgres
     AIRFLOW_UID: ${AIRFLOW_UID:-50000}
     AIRFLOW_CONN_SPARK_DEFAULT: '{"conn_type": "spark", "host": "spark://spark-master", "port": 7077}'
+    AWS_REGION: us-east-1
   depends_on:
     - postgres
   volumes:
@@ -86,6 +87,7 @@ services:
       CATALOG_S3_ACCESS__KEY__ID: minioadmin
       CATALOG_S3_SECRET__ACCESS__KEY: minioadmin
       CATALOG_S3_PATH__STYLE__ACCESS: "true"
+      AWS_REGION: us-east-1
     ports:
       - "8181:8181"
     depends_on:

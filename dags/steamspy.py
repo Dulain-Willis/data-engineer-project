@@ -64,7 +64,7 @@ def steamspy():
             "spark.steamspy.ds": "{{ ds }}",
             "spark.steamspy.run_id": "{{ run_id }}",
         },
-        trigger_rule="none_failed_min_one_success",
+        trigger_rule="none_failed",
     )
 
     silver = SparkSubmitOperator(
@@ -92,7 +92,6 @@ def steamspy():
     load_ch = load_clickhouse()
 
     should_extract >> extract_task >> bronze >> silver >> load_ch
-    should_extract >> bronze
 
 
 dag = steamspy()
