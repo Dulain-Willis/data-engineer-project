@@ -64,4 +64,4 @@ COPY --chown=airflow:root src/ /opt/airflow/src/
 RUN pip install --no-cache-dir -e /opt/airflow/
 
 # Copy spark jobs
-COPY --chown=airflow:root spark_jobs/ /opt/spark/jobs/
+COPY --chown=airflow:root spark/ /opt/spark/jobs/

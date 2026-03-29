@@ -12,7 +12,7 @@ x-airflow-common: &airflow-common
   depends_on:
     - postgres
   volumes:
-    - ./dags:/opt/airflow/dags
+    - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
 
@@ -117,7 +117,7 @@ services:
   spark-master:
     build:
       context: .
-      dockerfile: infra/docker/spark/Dockerfile
+      dockerfile: spark/Dockerfile
     container_name: spark-master
     environment:
       - SPARK_NO_DAEMONIZE=true
@@ -132,7 +132,7 @@ services:
   spark-worker:
     build:
       context: .
-      dockerfile: infra/docker/spark/Dockerfile
+      dockerfile: spark/Dockerfile
     container_name: spark-worker
     environment:
       - SPARK_NO_DAEMONIZE=true
@@ -167,7 +167,7 @@ services:
   airflow-webserver:
     build:
       context: .
-      dockerfile: infra/docker/airflow/Dockerfile
+      dockerfile: airflow/Dockerfile
     container_name: airflow-webserver
     <<: *airflow-common
     command: webserver
@@ -181,7 +181,7 @@ services:
   airflow-scheduler:
     build:
       context: .
-      dockerfile: infra/docker/airflow/Dockerfile
+      dockerfile: airflow/Dockerfile
     container_name: airflow-scheduler
     <<: *airflow-common
     command: scheduler

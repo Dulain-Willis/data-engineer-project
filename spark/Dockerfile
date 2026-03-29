@@ -38,4 +38,4 @@ COPY src/ /opt/pipeline/src/
 RUN pip3 install --no-cache-dir /opt/pipeline/
 
 # Copy spark jobs
-COPY spark_jobs/ /opt/spark/jobs/
+COPY spark/ /opt/spark/jobs/
