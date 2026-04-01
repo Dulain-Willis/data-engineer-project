@@ -1,0 +1,19 @@
+<clickhouse>
+    <!-- Hard cap: server will not allocate more than this. Container limit is 900m. -->
+    <max_server_memory_usage>800000000</max_server_memory_usage>
+
+    <!-- Caches: defaults are absurdly large for a dev box (mark_cache defaults to 5GB) -->
+    <mark_cache_size>67108864</mark_cache_size>          <!-- 64MB -->
+    <uncompressed_cache_size>134217728</uncompressed_cache_size>  <!-- 128MB -->
+    <index_mark_cache_size>33554432</index_mark_cache_size>        <!-- 32MB -->
+
+    <!-- Reduce background threads to save RAM -->
+    <background_pool_size>2</background_pool_size>
+    <background_merges_mutations_concurrency_ratio>1</background_merges_mutations_concurrency_ratio>
+    <background_schedule_pool_size>2</background_schedule_pool_size>
+    <background_fetches_pool_size>1</background_fetches_pool_size>
+    <background_common_pool_size>2</background_common_pool_size>
+
+    <!-- Limit per-query memory -->
+    <max_memory_usage>400000000</max_memory_usage>        <!-- 400MB per query -->
+</clickhouse>

@@ -25,15 +25,15 @@ def apply_s3a_conf(spark_conf):
 
 
 def get_spark_resource_conf() -> dict:
-    # Resource configuration for memory-constrained environments (5GB Docker pool).
-    # Total Spark footprint: ~2.8GB (leaves room for Airflow, MinIO, etc.)
-    # Memory breakdown: 1g + 384m (driver) + 1g + 384m (executor)
+    # Memory-constrained config for 8GB Mac (Docker pool ~5.5GB).
+    # Driver runs inside airflow-scheduler (mem_limit 1500m).
+    # Executor runs inside spark-worker (mem_limit 1g).
     return {
-        "spark.driver.memory": "1g",
-        "spark.executor.memory": "1g",
-        "spark.driver.memoryOverhead": "384m",
-        "spark.executor.memoryOverhead": "384m",
-        "spark.sql.shuffle.partitions": "8",  # Reduce from default 200
+        "spark.driver.memory": "512m",
+        "spark.executor.memory": "512m",
+        "spark.driver.memoryOverhead": "256m",
+        "spark.executor.memoryOverhead": "256m",
+        "spark.sql.shuffle.partitions": "4",
     }
 
 

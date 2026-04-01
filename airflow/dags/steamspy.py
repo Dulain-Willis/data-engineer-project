@@ -5,8 +5,6 @@ from datetime import datetime
 
 from pipelines.steamspy.extract import call_steamspy_api
 from pipelines.common.spark.config import get_s3a_conf, get_spark_resource_conf, get_iceberg_catalog_conf
-from pipelines.common.clickhouse.client import get_client
-from pipelines.steamspy.load import load_partition
 
 bucket_name = 'landing'
 
@@ -81,17 +79,7 @@ def steamspy():
         trigger_rule="none_failed_min_one_success",
     )
 
-    @task(trigger_rule="none_failed_min_one_success")
-    def load_clickhouse():
-        ctx = get_current_context()
-        ds = ctx["ds"]
-        client = get_client()
-        rows_loaded = load_partition(client, "steamspy_silver", ds)
-        return {"ds": ds, "rows_loaded": rows_loaded}
-
-    load_ch = load_clickhouse()
-
-    should_extract >> extract_task >> bronze >> silver >> load_ch
+    should_extract >> extract_task >> bronze >> silver
 
 
 dag = steamspy()
