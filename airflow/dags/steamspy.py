@@ -5,8 +5,10 @@ from datetime import datetime
 
 from pipelines.steamspy.extract import call_steamspy_api
 from pipelines.common.spark.config import get_s3a_conf, get_spark_resource_conf, get_iceberg_catalog_conf
+from pipelines.common.storage.minio_client import minio_client
 
 bucket_name = 'landing'
+_LANDING_PREFIX = "steamspy/raw/request=all/"
 
 
 @dag(
@@ -16,7 +18,7 @@ bucket_name = 'landing'
     catchup=False,
     max_active_runs=1,
     params={
-        "force_refresh": False,  # Default: skip extraction, reuse existing Iceberg data
+        "force_refresh": False,  # Default: skip extraction, reuse existing landing data
     },
 )
 def steamspy():
@@ -28,7 +30,7 @@ def steamspy():
         if force_refresh:
             print("Extraction will run (force_refresh=True)")
         else:
-            print("Skipping extraction (force_refresh=False). Re-using existing Iceberg data.")
+            print("Skipping extraction (force_refresh=False). Will resolve latest landing partition.")
 
         return force_refresh
 
@@ -49,7 +51,49 @@ def steamspy():
 
         return {"ds": ds, "run_id": run_id, "pages_uploaded": pages_uploaded}
 
+    @task(trigger_rule="none_failed")
+    def resolve_partition(**context) -> str:
+        """Determine which landing-zone partition bronze/silver should process.
+
+        When force_refresh=True the DAG just ran extraction and wrote data under
+        today's logical date (ds), so that value is returned directly.
+
+        When force_refresh=False extraction was skipped; the task lists the
+        MinIO landing bucket to find the latest available dt= partition so the
+        pipeline can re-process existing data without the caller having to
+        remember which date was originally extracted.
+        """
+        is_run_full_refresh = context["params"].get("force_refresh", False)
+        date_string = context["ds"]
+
+        if is_run_full_refresh:
+            print(f"force_refresh=True — using current execution date: {date_string}")
+            return date_string
+
+        minio_client = minio_client()
+        # list_objects() lists every object in a given file path
+        objects = minio_client.list_objects(bucket_name, prefix=_LANDING_PREFIX, recursive=False)
+
+        partition_datetimes = []
+        for obj in objects:
+            # object_name looks like "steamspy/raw/request=all/dt=2025-01-15/"
+            partition_datetime = obj.object_name.rstrip("/").split("/")[-1]
+
+            if partition_datetime.startswith("dt="):
+                partition_datetimes.append(partition_datetime[3:])
+
+        if not partition_datetimes:
+            raise ValueError(
+                "No partitions found under landing/steamspy/raw/request=all/. "
+                "Run with force_refresh=True to extract data first."
+            )
+
+        latest_partition_datetime = max(partition_datetimes)
+        print(f"force_refresh=False — resolved latest landing partition: {latest_partition_datetime}")
+        return latest_partition_datetime
+
     extract_task = extract()
+    resolve_partition_task = resolve_partition()
 
     bronze = SparkSubmitOperator(
         task_id="bronze",
@@ -59,7 +103,7 @@ def steamspy():
             **get_s3a_conf(),
             **get_spark_resource_conf(),
             **get_iceberg_catalog_conf(),
-            "spark.steamspy.ds": "{{ ds }}",
+            "spark.steamspy.ds": "{{ task_instance.xcom_pull(task_ids='resolve_partition') }}",
             "spark.steamspy.run_id": "{{ run_id }}",
         },
         trigger_rule="none_failed",
@@ -73,13 +117,13 @@ def steamspy():
             **get_s3a_conf(),
             **get_spark_resource_conf(),
             **get_iceberg_catalog_conf(),
-            "spark.steamspy.ds": "{{ ds }}",
+            "spark.steamspy.ds": "{{ task_instance.xcom_pull(task_ids='resolve_partition') }}",
             "spark.steamspy.run_id": "{{ run_id }}",
         },
         trigger_rule="none_failed_min_one_success",
     )
 
-    should_extract >> extract_task >> bronze >> silver
+    should_extract >> extract_task >> resolve_partition_task >> bronze >> silver
 
 
 dag = steamspy()

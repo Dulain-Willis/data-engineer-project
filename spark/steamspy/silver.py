@@ -29,7 +29,7 @@ def main():
 
     ds = spark.conf.get("spark.steamspy.ds")
 
-    df_bronze = spark.table("iceberg.steamspy.raw").filter(col("dt") == ds)
+    df_bronze = spark.table("iceberg.steamspy.bronze").filter(col("dt") == ds)
 
     json_map = MapType(StringType(), StructType(app_schema))
 
@@ -97,7 +97,7 @@ def main():
     )
 
     # Write to Iceberg table with atomic commits
-    table_name = "iceberg.steamspy.games"
+    table_name = "iceberg.steamspy.silver"
 
     # Check if table exists, create if not
     if not spark.catalog.tableExists(table_name):

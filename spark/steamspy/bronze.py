@@ -49,7 +49,7 @@ def main():
         )
     )
 
-    table_name = "iceberg.steamspy.raw"
+    table_name = "iceberg.steamspy.bronze"
 
     if not spark.catalog.tableExists(table_name):
         print(f"Creating Iceberg table: {table_name}")

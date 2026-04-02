@@ -1,5 +1,4 @@
-"""
-Replicates iceberg.steamspy.games (silver) → ClickHouse analytics.steamspy_silver.
+"""Replicates iceberg.steamspy.silver (silver) → ClickHouse analytics.steamspy_silver.
 
 Change detection uses Iceberg snapshot IDs stored in analytics.replication_state.
 Because silver.py uses .overwritePartitions() (OVERWRITE snapshots), the standard
@@ -21,7 +20,7 @@ from pipelines.common.clickhouse.client import get_client
 from pipelines.common.spark.session import build_spark_session
 from pipelines.replication.state import get_last_snapshot_id, update_snapshot_id
 
-ICEBERG_TABLE = "iceberg.steamspy.games"
+ICEBERG_TABLE = "iceberg.steamspy.silver"
 CLICKHOUSE_TABLE = "analytics.steamspy_silver"
 STATE_KEY = ICEBERG_TABLE
 
@@ -50,8 +49,7 @@ def get_current_snapshot_id(spark: SparkSession) -> int:
 
 
 def get_affected_dts(spark: SparkSession, last_snapshot_id: int) -> list[str]:
-    """
-    Returns dt partition values written in any snapshot committed after last_snapshot_id.
+    """Returns dt partition values written in any snapshot committed after last_snapshot_id.
 
     Queries the Iceberg `entries` metadata table (status=1 means file was added in that
     snapshot). Works correctly for both APPEND and OVERWRITE operations, unlike the
@@ -87,8 +85,7 @@ def delete_ch_partitions(dts: list[str]) -> None:
 
 
 def write_to_clickhouse(spark: SparkSession, df) -> int:
-    """
-    Writes a Spark DataFrame to ClickHouse using foreachPartition + clickhouse-driver.
+    """Writes a Spark DataFrame to ClickHouse using foreachPartition + clickhouse-driver.
     Returns the total row count written (tracked via Spark accumulator).
     """
     host = CLICKHOUSE_HOST
