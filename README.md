@@ -160,9 +160,39 @@ View logs for a specific task:
 - int: normalized and cleaned tables  
 - mart: analytics marts including dimensions and facts  
  
+## Contributing
+
+### Commit Message Format
+
+All commits follow this format:
+
+    [Issue #N]
+    type: short imperative description
+
+      One or two sentences explaining the motivation — what problem this
+      solves or what goal it achieves, not just what changed.
+
+      - Bullet per logical change group (file or subsystem level)
+      - Start with a verb: Add, Delete, Revert, Update, Fix, etc.
+      - Include the why when it is not obvious from the bullet itself
+
+**Types:** `feat`, `fix`, `refactor`, `docs`, `chore`
+
+**Example:**
+
+    [Issue #17]
+    fix: repair steamspy bronze/silver pipeline end-to-end
+
+      Bronze writer was emitting Parquet with a mismatched schema after the
+      landing bucket rename, causing the silver job to fail on read.
+
+      - Fix partition path construction in bronze writer to use new bucket name
+      - Update silver reader schema to match bronze output column order
+      - Add end-to-end smoke test that runs both stages against fixture data
+
 ## Contact
 
-Created by **Dulain Willis**.  
+Created by **Dulain Willis**.
 Reach out on LinkedIn if you want to discuss data engineering or the project.
 
 

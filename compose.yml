@@ -9,15 +9,12 @@ x-airflow-common: &airflow-common
     AIRFLOW_UID: ${AIRFLOW_UID:-50000}
     AIRFLOW_CONN_SPARK_DEFAULT: '{"conn_type": "spark", "host": "spark://spark-master", "port": 7077}'
     AWS_REGION: us-east-1
-    CLICKHOUSE_HOST: "172.28.0.10"   # Static IP — bypasses unreliable Docker Desktop DNS on macOS
   depends_on:
     - postgres
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
-  networks:
-    - pipeline
 
 services:
 
@@ -27,13 +24,8 @@ services:
     container_name: postgres
     environment:
       POSTGRES_PASSWORD: postgres
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
-    command: postgres -c shared_buffers=32MB -c max_connections=50 -c work_mem=4MB
     ports:
       - "5432:5432"
-    mem_limit: 256m
-    networks:
-      - pipeline
 
   minio:
   #S3 like object/bucket storage
@@ -48,9 +40,6 @@ services:
       - "9001:9001"
     volumes:
       - ./.mnt/minio:/data
-    mem_limit: 256m
-    networks:
-      - pipeline
 
   clickhouse:
   #Analytics OLAP Warehouse
@@ -68,15 +57,10 @@ services:
       - ./.mnt/clickhouse/data:/var/lib/clickhouse/
       - ./.mnt/clickhouse/logs:/var/log/clickhouse-server/
       - ./infra/clickhouse/init:/docker-entrypoint-initdb.d/
-      - ./infra/clickhouse/config:/etc/clickhouse-server/config.d/
     ulimits:
       nofile:
         soft: 262144
         hard: 262144
-    mem_limit: 900m
-    networks:
-      pipeline:
-        ipv4_address: 172.28.0.10  # Static IP — Docker Desktop DNS is unreliable on macOS
 
   tabix:
   #Web UI for ClickHouse analytics
@@ -91,9 +75,6 @@ services:
       - "8888:80"
     depends_on:
       - clickhouse
-    mem_limit: 128m
-    networks:
-      - pipeline
 
   iceberg-rest:
   #REST catalog for Apache Iceberg metadata management
@@ -107,15 +88,11 @@ services:
       CATALOG_S3_SECRET__ACCESS__KEY: minioadmin
       CATALOG_S3_PATH__STYLE__ACCESS: "true"
       AWS_REGION: us-east-1
-      JAVA_TOOL_OPTIONS: "-Xmx256m"
     ports:
       - "8181:8181"
     depends_on:
       - minio
     restart: always
-    mem_limit: 384m
-    networks:
-      - pipeline
 
   mc:
   #CLI for interacting with minio
@@ -127,9 +104,6 @@ services:
       - minio
     volumes:
       - ./.mnt/mc:/root/.mc
-    mem_limit: 128m
-    networks:
-      - pipeline
 
   terraform:
   #IAC for minio buckets
@@ -139,9 +113,6 @@ services:
     entrypoint: ["terraform"]
     volumes:
       - ./infra/terraform:/workspace
-    mem_limit: 128m
-    networks:
-      - pipeline
 
   spark-master:
     build:
@@ -150,8 +121,6 @@ services:
     container_name: spark-master
     environment:
       - SPARK_NO_DAEMONIZE=true
-      - CLICKHOUSE_HOST=172.28.0.10
-      - SPARK_DAEMON_MEMORY=256m
     env_file:
       - .env
     entrypoint: /bin/bash
@@ -159,9 +128,6 @@ services:
     ports:
       - "8081:8080"
       - "7077:7077"
-    mem_limit: 512m
-    networks:
-      - pipeline
 
   spark-worker:
     build:
@@ -170,17 +136,12 @@ services:
     container_name: spark-worker
     environment:
       - SPARK_NO_DAEMONIZE=true
-      - CLICKHOUSE_HOST=172.28.0.10
-      - SPARK_DAEMON_MEMORY=256m
     env_file:
       - .env
     entrypoint: /bin/bash
     command: -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077"
     depends_on:
       - spark-master
-    mem_limit: 1g
-    networks:
-      - pipeline
 
   airflow-init:
     <<: *airflow-common
@@ -216,7 +177,6 @@ services:
       airflow-init:
         condition: service_completed_successfully
     restart: always
-    mem_limit: 768m
 
   airflow-scheduler:
     build:
@@ -229,11 +189,3 @@ services:
       airflow-init:
         condition: service_completed_successfully
     restart: always
-    mem_limit: 1500m   # Must fit Spark driver (512m) + overhead (256m) + scheduler itself
-
-networks:
-  pipeline:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
