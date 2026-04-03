@@ -24,15 +24,16 @@ _LANDING_PREFIX = "steamspy/raw/request=all/"
 def steamspy():
 
     def check_should_extract(**context) -> bool:
-        force_refresh = context["params"].get("force_refresh", False)
-        print(f"force_refresh parameter: {force_refresh}")
+        
+        is_run_full_refresh = context["params"].get("force_refresh", False)
+        print(f"force_refresh parameter: {is_run_full_refresh}")
 
-        if force_refresh:
+        if is_run_full_refresh:
             print("Extraction will run (force_refresh=True)")
         else:
             print("Skipping extraction (force_refresh=False). Will resolve latest landing partition.")
 
-        return force_refresh
+        return is_run_full_refresh
 
     should_extract = ShortCircuitOperator(
         task_id="should_extract",
@@ -50,6 +51,7 @@ def steamspy():
         pages_uploaded = call_steamspy_api(bucket=bucket_name, ds=ds, run_id=run_id)
 
         return {"ds": ds, "run_id": run_id, "pages_uploaded": pages_uploaded}
+
 
     @task(trigger_rule="none_failed")
     def resolve_partition(**context) -> str:
@@ -72,28 +74,30 @@ def steamspy():
 
         minio_client = minio_client()
         # list_objects() lists every object in a given file path
-        objects = minio_client.list_objects(bucket_name, prefix=_LANDING_PREFIX, recursive=False)
+        raw_payload_minio_objects = minio_client.list_objects(bucket_name, prefix=_LANDING_PREFIX, recursive=False)
 
-        partition_datetimes = []
-        for obj in objects:
+        dates_source_data_was_extraced = []
+
+        for object in raw_payload_minio_objects:
             # object_name looks like "steamspy/raw/request=all/dt=2025-01-15/"
-            partition_datetime = obj.object_name.rstrip("/").split("/")[-1]
+            object_datetime = object.object_name.rstrip("/").split("/")[-1]
 
-            if partition_datetime.startswith("dt="):
-                partition_datetimes.append(partition_datetime[3:])
+            if object_datetime.startswith("dt="):
+                dates_source_data_was_extraced.append(object_datetime[3:])
 
-        if not partition_datetimes:
+        if not dates_source_data_was_extraced:
             raise ValueError(
                 "No partitions found under landing/steamspy/raw/request=all/. "
                 "Run with force_refresh=True to extract data first."
             )
 
-        latest_partition_datetime = max(partition_datetimes)
-        print(f"force_refresh=False — resolved latest landing partition: {latest_partition_datetime}")
-        return latest_partition_datetime
+        latest_date_source_data_was_extracted = max(dates_source_data_was_extraced)
+        print(f"force_refresh=False — resolved latest landing partition: {latest_date_source_data_was_extracted}")
+        return latest_date_source_data_was_extracted
 
     extract_task = extract()
     resolve_partition_task = resolve_partition()
+
 
     bronze = SparkSubmitOperator(
         task_id="bronze",
@@ -108,6 +112,7 @@ def steamspy():
         },
         trigger_rule="none_failed",
     )
+
 
     silver = SparkSubmitOperator(
         task_id="silver",
