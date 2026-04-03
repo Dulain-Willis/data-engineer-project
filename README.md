@@ -160,6 +160,23 @@ View logs for a specific task:
 - int: normalized and cleaned tables  
 - mart: analytics marts including dimensions and facts  
  
+## Local Development
+
+### Setup
+
+Create a virtual environment and install the package with dev dependencies:
+
+    python3 -m venv venv
+    venv/bin/pip install -e ".[dev]"
+
+### Running Tests
+
+    venv/bin/pytest tests/ -v
+
+To run a specific test file:
+
+    venv/bin/pytest tests/test_steamspy_extract.py -v
+
 ## Contributing
 
 ### Docstrings

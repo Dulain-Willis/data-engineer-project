@@ -15,30 +15,32 @@ def call_steamspy_api(bucket: str, ds: str, run_id: str) -> int:
 
     while True:
 
-        try:
-            params = {
-                "request": request_type,
-                "page": page
-            }
-            response = requests.get(url, params=params, timeout=30)
-            response.raise_for_status()
+        params = {
+            "request": request_type,
+            "page": page
+        }
 
-            print(f"Successful Request for page {page}")
+        max_api_retries = 3
+        for attempt in range(1, max_api_retries + 1):
+            try:
+                response = requests.get(url, params=params, timeout=30)
+                response.raise_for_status()
 
-            # Check for empty response (end of pagination)
-            if not response.content:
-                print(f"End of pagination reached at page {page}.")
+                # Check for empty response (end of pagination)
+                if not response.content:
+                    print(f"End of pagination reached at page {page}.")
+                    return pages_uploaded
+
+                data = response.json()
+                print(f"Successful Request for page {page}")
                 break
 
-            data = response.json()
-
-        except JSONDecodeError as e:
-            print(f"Invalid JSON received on page {page}. Ending extraction.")
-            break
-
-        except RequestException as e:
-            print(f"Network error on page {page}: {e}")
-            break
+            except (RequestException, JSONDecodeError) as e:
+                if attempt == max_api_retries:
+                    raise
+                wait = 2 ** attempt
+                print(f"Request failed for page {page} (attempt {attempt}/{max_api_retries}): {e}. Retrying in {wait}s.")
+                time.sleep(wait)
 
         if not data:
             print("This page is empty, ending process")
