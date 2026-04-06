@@ -5,7 +5,7 @@ minio_access_key = "minioadmin"
 minio_secret_key = "minioadmin"
 
 
-def minio_client():
+def create_minio_client():
     client = Minio(
         minio_endpoint,
         access_key=minio_access_key,

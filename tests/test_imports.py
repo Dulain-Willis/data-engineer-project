@@ -17,8 +17,8 @@ def test_common_spark_session():
 
 
 def test_common_storage_minio_client():
-    from pipelines.common.storage.minio_client import minio_client
-    assert callable(minio_client)
+    from pipelines.common.storage.minio_client import create_minio_client
+    assert callable(create_minio_client)
 
 
 def test_common_storage_minio_loader():

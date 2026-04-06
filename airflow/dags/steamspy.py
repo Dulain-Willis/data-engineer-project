@@ -5,7 +5,7 @@ from datetime import datetime
 
 from pipelines.steamspy.extract import call_steamspy_api
 from pipelines.common.spark.config import get_s3a_conf, get_spark_resource_conf, get_iceberg_catalog_conf
-from pipelines.common.storage.minio_client import minio_client
+from pipelines.common.storage.minio_client import create_minio_client
 
 bucket_name = 'landing'
 _LANDING_PREFIX = "steamspy/raw/request=all/"
@@ -72,7 +72,7 @@ def steamspy():
             print(f"force_refresh=True — using current execution date: {date_string}")
             return date_string
 
-        minio_client = minio_client()
+        minio_client = create_minio_client()
         # list_objects() lists every object in a given file path
         raw_payload_minio_objects = minio_client.list_objects(bucket_name, prefix=_LANDING_PREFIX, recursive=False)
 

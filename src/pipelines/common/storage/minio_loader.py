@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from pipelines.common.storage.minio_client import minio_client
+from pipelines.common.storage.minio_client import create_minio_client
 
 
 def upload_to_minio(
@@ -9,7 +9,7 @@ def upload_to_minio(
     raw_bytes: bytes,
     content_type: str,
 ):
-    client = minio_client()
+    client = create_minio_client()
 
     stream = BytesIO(raw_bytes)
 
