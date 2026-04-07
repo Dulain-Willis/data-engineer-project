@@ -40,11 +40,17 @@ class _IntAccumulator(AccumulatorParam):
 
 
 def get_current_snapshot_id(spark: SparkSession) -> int:
-    rows = spark.sql(
-        f"SELECT snapshot_id FROM {ICEBERG_TABLE}.snapshots ORDER BY committed_at DESC LIMIT 1"
+    rows = spark.sql(f"""
+        SELECT snapshot_id 
+        FROM {ICEBERG_TABLE}.snapshots 
+        ORDER BY committed_at DESC 
+        LIMIT 1
+    """
     ).collect()
+
     if not rows:
         raise RuntimeError(f"No snapshots found for {ICEBERG_TABLE} — has silver run yet?")
+
     return int(rows[0][0])
 
 
