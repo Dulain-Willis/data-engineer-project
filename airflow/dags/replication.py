@@ -35,9 +35,9 @@ with DAG(
     },
 ) as dag:
 
-    replicate_steamspy_games = SparkSubmitOperator(
-        task_id="replicate_steamspy_games",
-        application="/opt/spark/jobs/replication/steamspy_games.py",
+    replicate_steamspy = SparkSubmitOperator(
+        task_id="replicate_steamspy",
+        application="/opt/spark/jobs/replication/steamspy_replication.py",
         conn_id="spark_default",
         conf={
             **get_s3a_conf(),

@@ -6,7 +6,7 @@ from clickhouse_driver import Client
 STATE_TABLE = "analytics.replication_state"
 
 
-def get_last_snapshot_id(client: Client, table_name: str) -> int | None:
+def get_last_clickhouse_snapshot_id(client: Client, table_name: str) -> int | None:
     """Returns the last successfully processed Iceberg snapshot ID, or None for first run."""
 
     rows = client.execute(
