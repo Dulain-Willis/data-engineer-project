@@ -70,7 +70,7 @@ def get_last_iceberg_snapshot_id(spark: SparkSession) -> int:
     return int(snapshot_rows[0][0])
 
 
-def get_unreplicated_partition_dates(spark: SparkSession, last_replicated_snapshot_id: int) -> list[str]:
+def get_unreplicated_partition_dates(spark: SparkSession, last_clickhouse_snapshot_id: int) -> list[str]:
     """Return date partition values written in snapshots committed after last_clickhouse_snapshot_id.
 
     Queries the Iceberg `entries` metadata table (status=1 means file was added in that
@@ -93,7 +93,7 @@ def get_unreplicated_partition_dates(spark: SparkSession, last_replicated_snapsh
         WHERE snapshot_id IN (
             SELECT snapshot_id
             FROM {ICEBERG_TABLE}.snapshots
-            WHERE snapshot_id > {last_replicated_snapshot_id}
+            WHERE snapshot_id > {last_clickhouse_snapshot_id}
         )
         AND status = 1
     """).collect()
@@ -194,7 +194,7 @@ def main():
         airflow_param_passed_is_full_load = spark.conf.get("spark.replication.full_load", "false").lower() == "true"
 
         last_iceberg_snapshot_id = get_last_iceberg_snapshot_id(spark)
-        print(f"Current Iceberg snapshot ID: {last_iceberg_snapshot_id}")
+        print(f"Latest Iceberg snapshot ID: {last_iceberg_snapshot_id}")
 
         if airflow_param_passed_is_full_load:
             print("full_load=true: reloading all partitions")
@@ -213,6 +213,7 @@ def main():
             if last_clickhouse_snapshot_id is None:
                 print("No previous state — performing full load")
                 affected_date_partitions = get_all_iceberg_partition_dates(spark)
+
             else:
                 print(f"Detecting partitions changed since snapshot {last_clickhouse_snapshot_id}")
                 affected_date_partitions = get_unreplicated_partition_dates(spark, last_clickhouse_snapshot_id)

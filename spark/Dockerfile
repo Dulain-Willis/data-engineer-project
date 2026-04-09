@@ -32,10 +32,11 @@ RUN curl -fL --progress-bar \
     https://repo1.maven.org/maven2/software/amazon/awssdk/url-connection-client/2.20.18/url-connection-client-2.20.18.jar \
     -o /opt/spark/jars/url-connection-client-2.20.18.jar
 
-# Install the pipeline package (pip already installed with Python 3.12)
+# Install the pipeline package and clickhouse-driver (pip already installed with Python 3.12)
+# clickhouse-driver is needed on executors for write_dataframe_to_clickhouse foreachPartition
 COPY pyproject.toml /opt/pipeline/
 COPY src/ /opt/pipeline/src/
-RUN pip3 install --no-cache-dir /opt/pipeline/
+RUN pip3 install --no-cache-dir /opt/pipeline/ clickhouse-driver
 
 # Copy spark jobs
 COPY spark/ /opt/spark/jobs/

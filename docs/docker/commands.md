@@ -18,6 +18,10 @@ List all images:
 
     docker image ls
 
+Remove dangling images (untagged layers left behind after a rebuild — safe, does not touch named or running images):
+
+    docker image prune -f
+
 Remove all unused images, containers, networks, and volumes (destructive):
 
     docker system prune -a --volumes

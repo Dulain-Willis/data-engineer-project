@@ -138,6 +138,9 @@ make spark q="SELECT file_path, record_count FROM steamspy.silver.files WHERE pa
 
 # Full snapshot lineage
 make spark q="SELECT * FROM steamspy.silver.history"
+
+# Drop a table (e.g. to clear stale metadata when the Iceberg catalog is out of sync with MinIO)
+make spark q="DROP TABLE IF EXISTS iceberg.steamspy.silver"
 ```
 
 ---
