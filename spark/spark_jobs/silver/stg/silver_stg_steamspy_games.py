@@ -1,5 +1,5 @@
 from pipelines.common.spark.session import build_spark_session
-from pyspark.sql.functions import from_json, explode, col, lit, row_number, desc
+from pyspark.sql.functions import from_json, explode, col, lit, row_number, desc, lower
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, MapType
 from pyspark.sql.window import Window
 
@@ -25,7 +25,7 @@ app_schema = StructType([
 
 
 def main():
-    spark = build_spark_session("steamspy-silver")
+    spark = build_spark_session("steamspy-silver-stg-games")
 
     ds = spark.conf.get("spark.steamspy.ds")
 
@@ -74,9 +74,9 @@ def main():
     df_final = (
         df_deduped.select(
             "appid",
-            "name",
-            "developer",
-            "publisher",
+            lower(col("name")).alias("game_title"),
+            lower(col("developer")).alias("developer"),
+            lower(col("publisher")).alias("publisher"),
             "score_rank",
             "positive",
             "negative",
@@ -97,7 +97,7 @@ def main():
     )
 
     # Write to Iceberg table with atomic commits
-    table_name = "iceberg.steamspy.silver"
+    table_name = "iceberg.steamspy.silver_stg_games"
 
     # Check if table exists, create if not
     if not spark.catalog.tableExists(table_name):

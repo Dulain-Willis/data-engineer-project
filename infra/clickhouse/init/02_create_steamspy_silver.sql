@@ -1,7 +1,7 @@
-CREATE TABLE IF NOT EXISTS analytics.steamspy_silver
+CREATE TABLE IF NOT EXISTS analytics.steamspy_silver_stg_games
 (
     appid Int32,
-    name Nullable(String),
+    game_title Nullable(String),
     developer Nullable(String),
     publisher Nullable(String),
     score_rank Nullable(String),

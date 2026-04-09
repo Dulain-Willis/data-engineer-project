@@ -1,6 +1,7 @@
 from airflow.decorators import dag, task
 from airflow.operators.python import get_current_context, ShortCircuitOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.utils.task_group import TaskGroup
 from datetime import datetime
 
 from pipelines.steamspy.extract import call_steamspy_api
@@ -24,7 +25,7 @@ _LANDING_PREFIX = "steamspy/raw/request=all/"
 def steamspy():
 
     def check_should_extract(**context) -> bool:
-        
+
         is_run_full_refresh = context["params"].get("force_refresh", False)
         print(f"force_refresh parameter: {is_run_full_refresh}")
 
@@ -101,7 +102,7 @@ def steamspy():
 
     bronze = SparkSubmitOperator(
         task_id="bronze",
-        application="/opt/spark/jobs/steamspy/bronze.py",
+        application="/opt/spark/jobs/spark_jobs/bronze/bronze_steamspy_games.py",
         conn_id="spark_default",
         conf={
             **get_s3a_conf(),
@@ -113,22 +114,51 @@ def steamspy():
         trigger_rule="none_failed",
     )
 
+    _silver_conf = {
+        **get_s3a_conf(),
+        **get_spark_resource_conf(),
+        **get_iceberg_catalog_conf(),
+        "spark.steamspy.ds": "{{ task_instance.xcom_pull(task_ids='resolve_partition') }}",
+        "spark.steamspy.run_id": "{{ run_id }}",
+    }
 
-    silver = SparkSubmitOperator(
-        task_id="silver",
-        application="/opt/spark/jobs/steamspy/silver.py",
-        conn_id="spark_default",
-        conf={
-            **get_s3a_conf(),
-            **get_spark_resource_conf(),
-            **get_iceberg_catalog_conf(),
-            "spark.steamspy.ds": "{{ task_instance.xcom_pull(task_ids='resolve_partition') }}",
-            "spark.steamspy.run_id": "{{ run_id }}",
-        },
-        trigger_rule="none_failed_min_one_success",
-    )
+    with TaskGroup("silver") as silver_group:
 
-    should_extract >> extract_task >> resolve_partition_task >> bronze >> silver
+        silver_stg = SparkSubmitOperator(
+            task_id="silver_stg",
+            application="/opt/spark/jobs/spark_jobs/silver/stg/silver_stg_steamspy_games.py",
+            conn_id="spark_default",
+            conf=_silver_conf,
+            trigger_rule="none_failed_min_one_success",
+        )
+
+        silver_int_developers = SparkSubmitOperator(
+            task_id="silver_int_developers",
+            application="/opt/spark/jobs/spark_jobs/silver/int/silver_int_steamspy_developers.py",
+            conn_id="spark_default",
+            conf={
+                **get_s3a_conf(),
+                **get_spark_resource_conf(),
+                **get_iceberg_catalog_conf(),
+                "spark.steamspy.ds": "{{ task_instance.xcom_pull(task_ids='resolve_partition') }}",
+            },
+        )
+
+        silver_int_publishers = SparkSubmitOperator(
+            task_id="silver_int_publishers",
+            application="/opt/spark/jobs/spark_jobs/silver/int/silver_int_steamspy_publishers.py",
+            conn_id="spark_default",
+            conf={
+                **get_s3a_conf(),
+                **get_spark_resource_conf(),
+                **get_iceberg_catalog_conf(),
+                "spark.steamspy.ds": "{{ task_instance.xcom_pull(task_ids='resolve_partition') }}",
+            },
+        )
+
+        silver_stg >> [silver_int_developers, silver_int_publishers]
+
+    should_extract >> extract_task >> resolve_partition_task >> bronze >> silver_group
 
 
 dag = steamspy()
