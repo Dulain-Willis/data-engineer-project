@@ -36,7 +36,7 @@ RUN curl -fL --progress-bar \
 # clickhouse-driver is needed on executors for write_dataframe_to_clickhouse foreachPartition
 COPY pyproject.toml /opt/pipeline/
 COPY src/ /opt/pipeline/src/
-RUN pip3 install --no-cache-dir /opt/pipeline/ clickhouse-driver
+RUN pip3 install --no-cache-dir /opt/pipeline/[spark_dockerfile]
 
 # Copy spark jobs
 COPY spark/ /opt/spark/jobs/

@@ -65,6 +65,9 @@ services:
 
   tabix:
   #Web UI for ClickHouse analytics
+  # No native ARM64 image exists for tabix — platform forces Rosetta emulation on Mac (Apple Silicon).
+  # This is a no-op on amd64 (e.g. WSL on PC).
+    platform: linux/amd64
     image: spoonest/clickhouse-tabix-web-client:stable
     container_name: tabix
     environment:
