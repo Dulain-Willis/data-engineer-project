@@ -50,8 +50,8 @@ def apply_s3a_conf(spark_conf):
 def get_spark_resource_conf() -> dict:
     """Return memory and shuffle settings tuned for the local Docker environment.
 
-    Targets a ~2.8 GB total Spark footprint (1 GB + 384 MB driver overhead,
-    1 GB + 384 MB executor overhead) to leave headroom for Airflow, MinIO, and
+    Targets a ~1.5 GB total Spark footprint (512 MB + 256 MB driver overhead,
+    512 MB + 256 MB executor overhead) to leave headroom for Airflow, MinIO, and
     other services sharing the Docker pool. Shuffle partitions are reduced from
     the Spark default of 200 to avoid excessive overhead on small datasets.
 
@@ -60,11 +60,11 @@ def get_spark_resource_conf() -> dict:
         SparkSubmitOperator.
     """
     return {
-        "spark.driver.memory": "1g",
-        "spark.executor.memory": "1g",
-        "spark.driver.memoryOverhead": "384m",
-        "spark.executor.memoryOverhead": "384m",
-        "spark.sql.shuffle.partitions": "8",  # Reduce from default 200
+        "spark.driver.memory": "512m",
+        "spark.executor.memory": "512m",
+        "spark.driver.memoryOverhead": "256m",
+        "spark.executor.memoryOverhead": "256m",
+        "spark.sql.shuffle.partitions": "4",  # Reduce from default 200; dataset is small
     }
 
 

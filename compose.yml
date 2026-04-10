@@ -9,6 +9,7 @@ x-airflow-common: &airflow-common
     AIRFLOW_UID: ${AIRFLOW_UID:-50000}
     AIRFLOW_CONN_SPARK_DEFAULT: '{"conn_type": "spark", "host": "spark://spark-master", "port": 7077}'
     AWS_REGION: us-east-1
+    AIRFLOW__WEBSERVER__WORKERS: "1"
   depends_on:
     - postgres
   volumes:

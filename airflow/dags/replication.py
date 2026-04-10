@@ -42,6 +42,7 @@ with DAG(
     schedule=None,
     catchup=False,
     max_active_runs=1,
+    max_active_tasks=1,
     tags=["replication", "clickhouse", "iceberg"],
     params={
         "from_snapshot": Param(
@@ -57,8 +58,9 @@ with DAG(
     },
 ) as dag:
 
+    prev = None
     for tbl in _TABLES:
-        SparkSubmitOperator(
+        task = SparkSubmitOperator(
             task_id=tbl["task_id"],
             application=_REPLICATION_APP,
             conn_id="spark_default",
@@ -73,3 +75,6 @@ with DAG(
                 "spark.replication.full_load": "{{ params.full_load | lower }}",
             },
         )
+        if prev is not None:
+            prev >> task
+        prev = task
