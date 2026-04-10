@@ -41,7 +41,7 @@ ifdef q
 # 2>/dev/null drops WARN/INFO log lines which spark-sql emits on stderr, leaving only query results.
 # sed converts tab-separated columns to ' | ' for readability.
 spark:
-	@docker compose exec spark-master /opt/spark/bin/spark-sql $(SPARK_CONF) -e "$(q)" 2>/dev/null | sed 's/\t/ | /g'
+	@docker compose exec spark-master /opt/spark/bin/spark-sql $(SPARK_CONF) -e "$(q)" 2>&1 | sed 's/\t/ | /g'
 else
 spark:
 	@docker compose exec spark-master /opt/spark/bin/spark-sql $(SPARK_CONF)

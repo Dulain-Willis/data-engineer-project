@@ -122,10 +122,18 @@ Airflow coordinates extraction, triggers Airbyte syncs, runs dbt models and test
 
 ### Setup
 
+Dependencies are declared in `pyproject.toml` using optional-dependency groups instead of a `requirements.txt`. The `-e` flag installs the project in editable mode (changes to source take effect immediately without reinstalling). The `[group]` suffix installs that optional group on top of the core dependencies.
+
 Create a virtual environment and install the package with dev dependencies:
 
     python3 -m venv venv
     venv/bin/pip install -e ".[dev]"
+
+For dbt development:
+
+    python3 -m venv .venv-dbt
+    source .venv-dbt/bin/activate
+    pip install -e ".[dbt]"
 
 ### Running Tests
 

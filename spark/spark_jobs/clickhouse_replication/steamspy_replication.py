@@ -89,7 +89,7 @@ def get_unreplicated_partition_dates(spark: SparkSession, iceberg_table: str, la
         last_clickhouse_snapshot_id.
     """
     partition_rows = spark.sql(f"""
-        SELECT DISTINCT partition.dt
+        SELECT DISTINCT data_file.partition.dt
         FROM {iceberg_table}.entries
         WHERE snapshot_id IN (
             SELECT snapshot_id
@@ -119,7 +119,7 @@ def get_all_iceberg_partition_dates(spark: SparkSession, iceberg_table: str) -> 
 
 
 def delete_clickhouse_date_partitions(clickhouse_table: str, date_partitions: list[str]) -> None:
-    """Clear the given dt partitions from ClickHouse before reload for idempotency.
+    """Clear the given date partitions from ClickHouse before reload for idempotency.
 
     Args:
         clickhouse_table: Fully qualified ClickHouse table name.
