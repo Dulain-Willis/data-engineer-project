@@ -1,0 +1,7 @@
+version: 2
+
+sources:
+  - name: analytics
+    schema: analytics
+    tables:
+      - name: steamspy_silver_stg_games

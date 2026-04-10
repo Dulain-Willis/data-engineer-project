@@ -25,6 +25,14 @@ spark_dockerfile = [
     "clickhouse-driver>=0.2.9",
 ]
 dev = ["pytest>=7.0.0", "minio>=7.2.0"]
+notebooks = [
+    "clickhouse-driver>=0.2.9",
+    "wordcloud>=1.9.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.0",
+    "ipykernel>=6.0.0",
+    "jupyter>=1.0.0",
+]
 dbt = ["dbt-core>=1.8.0", "dbt-clickhouse>=1.8.0"]
 
 [tool.hatch.build.targets.wheel]
