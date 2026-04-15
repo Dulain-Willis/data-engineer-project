@@ -1,123 +1,71 @@
 # Steam Data Platform
 
-A fully automated & containerized, end-to-end batch data pipeline that ingests data from the Steam ecosystem, stores it in S3-compatible object storage, loads it into a warehouse, and transforms it using dbt. Everything is orchestrated with Airflow and the infrastructure is managed with Docker and Terraform.
+An end-to-end batch data pipeline that ingests Steam game metadata, processes it through a multi-layer warehouse, and surfaces analytics-ready models. Fully containerized with Docker Compose and orchestrated by Airflow.
 
 ## Overview
 
-This project pulls Steam game metadata, lands the raw JSON in MinIO, moves it through Airbyte into a warehouse (Postgres or Snowflake), and transforms it into analytics-ready models using dbt. Airflow handles the full ELT workflow from extraction through transformation.
+Python extracts data from the SteamSpy API and lands it in MinIO backed by Apache Iceberg. PySpark jobs process data through bronze and silver Iceberg layers, with silver replicated into ClickHouse. dbt transforms the ClickHouse silver tables into gold-layer analytics models.
 
 ## Architecture
 
-                Steam APIs 
-                    |
-                    v
-             Python Extract Scripts
-                    |
-                    v
-           MinIO (Raw JSON Buckets)
-                    |
-                    v
-            Airbyte (ELT Ingestion)
-                    |
-                    v
-            Postgres Warehouse
-                    |
-                    v
-                   dbt
-     (staging → intermediate → mart)
-                    |
-                    v
-              Analytics Layer
+                  SteamSpy API
+                       |
+                       v
+              Python Extract Scripts
+                       |
+                       v
+          MinIO + Apache Iceberg
+                       |
+                       v
+                 PySpark Jobs
+              /               \
+        Bronze Layer        Silver Layer
+        (Iceberg/MinIO)     (Iceberg/MinIO)
+                                  |
+                                  v
+                     ClickHouse Replication
+                       (Silver mirror in CH)
+                                  |
+                                  v
+                          dbt Gold Models
+                                  |
+                                  v
+                          Analytics Layer
 
-## Features
-
-- Extraction from Steam APIs using Python  
-- Raw JSON storage in MinIO  
-- Airbyte ingestion into Postgres (analytics warehouse)  
-- dbt transformation layer following a bronze/silver/gold model  
-- Incremental models, schema tests, documentation, and Jinja macros  
-- Airflow DAG orchestrating extract → load → transform  
-- Fully containerized using Docker Compose  
-- Terraform provisioning of MinIO buckets  
-- Modular design to expand to additional APIs or structured processing (PySpark)
-
-# Repository Structure
-
-    .
-    ├── airflow/
-    │   ├── logs/
-    │   └── plugins/
-    ├── dags/
-    │   ├── src/
-    │   │   ├── extract/
-    │   │   ├── load/
-    │   │   └── transform/
-    │   ├── connectors/
-    │   ├── <dag_1>.py
-    │   └── <dag_2>.py
-    ├── transform/
-    │   └── dbt/
-    │       ├── models/
-    │       ├── macros/
-    │       ├── snapshots/
-    │       └── tests/
-    ├── infra/
-    │   ├── docker/
-    │   └── terraform/
-    └── README.md
+        Airflow orchestrates the full pipeline
 
 ## How the Pipeline Works
 
 ### 1. Extract
-Python scripts call multiple Steam endpoints, fetch JSON metadata, and write the files to MinIO. Objects are written using a partitioned folder structure (such as by date or app ID).
+Python scripts call the SteamSpy API and write partitioned JSON files to MinIO (S3-compatible object storage).
 
-### 2. Load
-Airbyte reads from MinIO using an S3-compatible connector and loads the raw data into a warehouse Postgres.
+### 2. Replicate
+PySpark jobs process data through bronze (raw) and silver (cleaned, typed) Iceberg tables stored in MinIO. Silver is then replicated into ClickHouse for fast analytical queries.
 
 ### 3. Transform
-dbt organizes transformations across three layers:
-
-- Staging: raw ingested objects  
-- Intermediate: cleaned, typed, standardized tables  
-- Mart: analytics-ready fact and dimension models  
+dbt runs gold-layer models on top of ClickHouse silver tables, producing analytics-ready outputs including hybrid-ranked game scores.
 
 ### 4. Orchestration
-Airflow coordinates extraction, triggers Airbyte syncs, runs dbt models and tests, and manages retries, logging, and scheduling.
+Airflow DAGs coordinate extraction, Spark replication, and dbt runs end-to-end.
 
 ## Tech Stack
 
-- Python  
-- Airflow  
-- MinIO  
-- Airbyte  
-- Postgres or Snowflake  
-- dbt  
-- Docker / Docker Compose  
-- Terraform  
-- PySpark
+Python · PySpark · Apache Iceberg · Airflow · MinIO · ClickHouse · dbt · Docker Compose · Terraform
 
 ## Setup
 
 ### Prerequisites
 
-- abctl (airbyte)
-- eveything else is dockerized, even cli binaries :) 
+- everything is dockerized, even cli binaries :)
 
 ### Steps
 
-1. Clone the repository  
-2. Run `docker compose up -d`  
-3. Initialize Airflow  
-4. Apply Terraform to create MinIO buckets  
-5. Configure Airbyte source and destination  
-6. Trigger the pipeline in Airflow  
+1. Clone the repository
+2. Run `docker compose up -d`
+3. Initialize Airflow
+4. Apply Terraform to create MinIO buckets
+5. Trigger the pipeline in Airflow
 
-## Data Models
-
-- staging: raw game data from both APIs  
-- int: normalized and cleaned tables  
-- mart: analytics marts including dimensions and facts  
- 
 ## Local Development
 
 ### Setup
@@ -151,5 +99,3 @@ See [docs/contributing.md](docs/contributing.md).
 
 Created by **Dulain Willis**.
 Reach out on LinkedIn if you want to discuss data engineering or the project.
-
-
