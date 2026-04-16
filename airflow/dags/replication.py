@@ -23,16 +23,6 @@ _TABLES = [
         "iceberg_table": "iceberg.steamspy.silver_stg_games",
         "clickhouse_table": "analytics.steamspy_silver_stg_games",
     },
-    {
-        "task_id": "replicate_steamspy_silver_int_developers",
-        "iceberg_table": "iceberg.steamspy.silver_int_developers",
-        "clickhouse_table": "analytics.steamspy_silver_int_developers",
-    },
-    {
-        "task_id": "replicate_steamspy_silver_int_publishers",
-        "iceberg_table": "iceberg.steamspy.silver_int_publishers",
-        "clickhouse_table": "analytics.steamspy_silver_int_publishers",
-    },
 ]
 
 

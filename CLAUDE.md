@@ -38,7 +38,8 @@ src/pipelines/         # Shared Python package (imported by Spark jobs & Airflow
   common/clickhouse/   # ClickHouse connection factory
   replication/         # Snapshot state tracking for CDC
 airflow/dags/          # DAG definitions (steamspy.py, replication.py)
-spark/spark_jobs/      # PySpark job scripts (bronze/, silver/stg, silver/int, clickhouse_replication/)
+spark/spark_jobs/      # PySpark job scripts (bronze/, staging/stg, clickhouse_replication/)
+dbt/models/intermediate/ # Developer/publisher dimension models (ClickHouse SQL)
 dbt/models/gold/       # Analytics SQL models (ranking, word cloud)
 infra/terraform/       # MinIO bucket provisioning
 infra/clickhouse/init/ # ClickHouse schema init SQL
@@ -120,8 +121,9 @@ docker compose up -d
 # Provision MinIO buckets
 terraform apply -chdir=infra/terraform
 
-# Query Iceberg via spark-sql (inside container)
+# Query or modify Iceberg tables via spark-sql — always use the Makefile target
 make spark q="SELECT * FROM iceberg.steamspy.silver_stg_games LIMIT 10"
+make spark q="DROP TABLE IF EXISTS iceberg.steamspy.some_table PURGE"
 
 # Query MinIO Parquet via DuckDB
 make duck q="SELECT * FROM 's3://landing/...'"
