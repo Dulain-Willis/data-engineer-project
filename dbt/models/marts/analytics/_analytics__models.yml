@@ -1,0 +1,168 @@
+version: 2
+
+models:
+  - name: games
+    description: >
+      Wide, denormalized game entity table. One row per game per partition date.
+      Includes all SteamSpy attributes plus computed review metrics
+      (total_reviews, approval_pct, wilson_score).
+    columns:
+      - name: app_id
+        description: Steam application ID (primary key with partition_date).
+        data_tests:
+          - not_null
+
+      - name: game_title
+        description: Display title of the game on Steam.
+
+      - name: developer
+        description: Comma-separated developer name(s).
+
+      - name: publisher
+        description: Comma-separated publisher name(s).
+
+      - name: score_rank
+        description: SteamSpy-provided score rank.
+
+      - name: owners
+        description: Estimated owner count range.
+
+      - name: price
+        description: Current price.
+
+      - name: initial_price
+        description: Original price before discounts.
+
+      - name: discount
+        description: Current discount percentage.
+
+      - name: positive
+        description: Count of positive user reviews.
+
+      - name: negative
+        description: Count of negative user reviews.
+
+      - name: total_reviews
+        description: Total user reviews (positive + negative).
+
+      - name: approval_pct
+        description: Percentage of reviews that are positive, rounded to one decimal.
+
+      - name: wilson_score
+        description: Wilson 95% CI lower-bound score, rounded to four decimals.
+
+      - name: userscore
+        description: SteamSpy-computed user score.
+
+      - name: average_playtime_forever
+        description: Average total playtime in minutes across all owners.
+
+      - name: average_playtime_2weeks
+        description: Average playtime in minutes over the last two weeks.
+
+      - name: median_playtime_forever
+        description: Median total playtime in minutes across all owners.
+
+      - name: median_playtime_2weeks
+        description: Median playtime in minutes over the last two weeks.
+
+      - name: ccu
+        description: Peak concurrent users.
+
+      - name: ingested_at
+        description: Timestamp when the record was ingested into the bronze layer.
+
+      - name: partition_date
+        description: Partition date inherited from the source pipeline.
+
+  - name: developers
+    description: >
+      Deduplicated developer entity table. One row per unique developer per
+      partition date, exploded from the comma-separated developer field in
+      stg_steamspy__games. Preserves business-name suffixes.
+    columns:
+      - name: developer_id
+        description: Surrogate key assigned by row number at materialisation time.
+
+      - name: developer
+        description: Individual developer name, trimmed and deduplicated.
+
+      - name: partition_date
+        description: Partition date inherited from the source staging table.
+
+  - name: publishers
+    description: >
+      Deduplicated publisher entity table. One row per unique publisher per
+      partition date, exploded from the comma-separated publisher field in
+      stg_steamspy__games. Preserves business-name suffixes.
+    columns:
+      - name: publisher_id
+        description: Surrogate key assigned by row number at materialisation time.
+
+      - name: publisher
+        description: Individual publisher name, trimmed and deduplicated.
+
+      - name: partition_date
+        description: Partition date inherited from the source staging table.
+
+  - name: top_games_ranked
+    description: >
+      Top 50 Steam games ranked by raw positive review count, gated by Wilson
+      score quality. Only the top 500 games by Wilson score (95% CI lower bound)
+      are eligible, then ranked by absolute positive review volume within that
+      pool. Rewards games that are both genuinely well-received and widely played.
+    columns:
+      - name: rank
+        description: Position 1-50, ordered by positive review count within the Wilson pool.
+
+      - name: game_title
+        description: Steam game title.
+
+      - name: total_reviews
+        description: Total user reviews (positive + negative).
+
+      - name: positive
+        description: Count of positive user reviews.
+
+      - name: negative
+        description: Count of negative user reviews.
+
+      - name: approval_pct
+        description: Percentage of reviews that are positive.
+
+      - name: wilson_score
+        description: Wilson score lower bound (used as the quality gate, not for final ranking).
+
+  - name: worst_games_ranked
+    description: >
+      Bottom 10 Steam games ranked by raw negative review volume.
+    columns:
+      - name: rank
+        description: Position 1-10, ordered by negative review count descending.
+
+      - name: game_title
+        description: Steam game title.
+
+      - name: positive
+        description: Count of positive user reviews.
+
+      - name: negative
+        description: Count of negative user reviews.
+
+      - name: total_reviews
+        description: Total user reviews (positive + negative).
+
+      - name: approval_pct
+        description: Percentage of reviews that are positive.
+
+  - name: game_title_words
+    description: >
+      Word frequency count across all game titles, suitable for word cloud
+      visualisations. Non-letter characters are stripped, titles are split
+      into individual words, and each word is counted across all games.
+    columns:
+      - name: word
+        description: A single word extracted from a game title.
+
+      - name: word_count
+        description: Number of times this word appears across all game titles.

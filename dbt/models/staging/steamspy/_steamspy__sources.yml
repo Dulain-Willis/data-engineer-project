@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: steamspy
+    schema: analytics
+    tables:
+      - name: steamspy_silver_stg_games
+        description: >
+          Silver staging table replicated from Iceberg via snapshot-based CDC.
+          One row per game per partition date. Contains review counts, ownership
+          estimates, playtime stats, and pricing data from the SteamSpy API.

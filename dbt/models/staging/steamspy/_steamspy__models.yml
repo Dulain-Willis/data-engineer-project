@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: stg_steamspy__games
+    description: >
+      Cleaned and renamed games table from the SteamSpy silver staging source.
+      One row per game per partition date. Renames source columns to follow
+      naming conventions and casts types where needed.
+    columns:
+      - name: app_id
+        description: Steam application ID (primary key with partition_date).
+        data_tests:
+          - not_null
+
+      - name: game_title
+        description: Display title of the game on Steam.
+
+      - name: developer
+        description: Comma-separated developer name(s) from SteamSpy.
+
+      - name: publisher
+        description: Comma-separated publisher name(s) from SteamSpy.
+
+      - name: score_rank
+        description: SteamSpy-provided score rank (nullable).
+
+      - name: positive
+        description: Count of positive user reviews.
+
+      - name: negative
+        description: Count of negative user reviews.
+
+      - name: userscore
+        description: SteamSpy-computed user score.
+
+      - name: owners
+        description: Estimated owner count range as a string.
+
+      - name: average_playtime_forever
+        description: Average total playtime in minutes across all owners.
+
+      - name: average_playtime_2weeks
+        description: Average playtime in minutes over the last two weeks.
+
+      - name: median_playtime_forever
+        description: Median total playtime in minutes across all owners.
+
+      - name: median_playtime_2weeks
+        description: Median playtime in minutes over the last two weeks.
+
+      - name: ccu
+        description: Peak concurrent users.
+
+      - name: price
+        description: Current price as a string.
+
+      - name: initial_price
+        description: Original price before discounts as a string.
+
+      - name: discount
+        description: Current discount percentage as a string.
+
+      - name: run_id
+        description: Pipeline run identifier from ingestion.
+
+      - name: ingested_at
+        description: Timestamp when the record was ingested into the bronze layer.
+
+      - name: partition_date
+        description: Partition date inherited from the source pipeline.
