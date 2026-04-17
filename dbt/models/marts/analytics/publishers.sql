@@ -1,52 +1,48 @@
-{# Splits comma-separated publisher field into individual deduplicated rows. #}
-{# Preserves business-name suffixes (LLC, Inc., Ltd., Co., Corp.) by using  #}
-{# a sentinel string to protect commas before known suffixes.              #}
-
-with games as (
-    select
+with publishers as (
+    select distinct
         publisher,
         partition_date
-    from {{ ref('stg_steamspy__games') }}
-    where publisher is not null and publisher != ''
+    from {{ ref('int_games_publishers_exploded') }}
 ),
 
-publishers_suffixes_protected as (
+publisher_games as (
+    select * from {{ ref('int_games_publishers_exploded') }}
+),
+
+publisher_game_metrics as (
     select
-        replaceRegexpAll(
-            replaceRegexpAll(
-                ifNull(games.publisher, ''),
-                ',\\s*(co\\.,\\s*ltd\\.?)',
-                '|||\\1'
+        publisher_games.publisher,
+        publisher_games.partition_date,
+        count(distinct publisher_games.app_id) as num_games,
+        sum(publisher_games.positive + publisher_games.negative) as total_reviews,
+        sum(publisher_games.positive) as total_positive,
+        sum(publisher_games.negative) as total_negative,
+        round(
+            if(
+                sum(publisher_games.positive + publisher_games.negative) > 0,
+                sum(publisher_games.positive)
+                / sum(publisher_games.positive + publisher_games.negative) * 100,
+                0
             ),
-            ',\\s*(llc\\.?|inc\\.?|ltd\\.?|l\\.l\\.c\\.?|co\\.|corp\\.?)',
-            '|||\\1'
-        ) as protected_str,
-        games.partition_date
-    from games
+            1
+        ) as avg_approval_pct
+    from publisher_games
+    group by 1, 2
 ),
 
-publishers_exploded as (
+publishers_with_game_metrics as (
     select
-        trim(
-            replaceAll(pub_raw, '|||', ', ')
-        ) as publisher,
-        publishers_suffixes_protected.partition_date
-    from publishers_suffixes_protected
-    array join splitByChar(
-        ',', publishers_suffixes_protected.protected_str
-    ) as pub_raw
-),
-
-publishers_deduped as (
-    select distinct
-        publishers_exploded.publisher,
-        publishers_exploded.partition_date
-    from publishers_exploded
-    where publishers_exploded.publisher != ''
+        publishers.publisher,
+        publisher_game_metrics.num_games,
+        publisher_game_metrics.total_reviews,
+        publisher_game_metrics.total_positive,
+        publisher_game_metrics.total_negative,
+        publisher_game_metrics.avg_approval_pct,
+        publishers.partition_date
+    from publishers
+    left join publisher_game_metrics
+        on publishers.publisher = publisher_game_metrics.publisher
+        and publishers.partition_date = publisher_game_metrics.partition_date
 )
 
-select
-    rowNumberInAllBlocks() as publisher_id,
-    publishers_deduped.publisher,
-    publishers_deduped.partition_date
-from publishers_deduped
+select * from publishers_with_game_metrics

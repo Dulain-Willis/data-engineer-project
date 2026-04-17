@@ -3,7 +3,7 @@
 #       See docs/minio/querying.md for usage and examples.
 MINIO_INIT := infra/minio/minio.sql
 
-.PHONY: duck spark
+.PHONY: duck spark clickhouse
 
 ifdef q
 duck:
@@ -45,4 +45,17 @@ spark:
 else
 spark:
 	@docker compose exec spark-master /opt/spark/bin/spark-sql $(SPARK_CONF)
+endif
+
+# clickhouse: Query ClickHouse via clickhouse-client inside the running container.
+#             Uses FORMAT Pretty for readable output.
+#             See docs/minio/querying.md for usage and examples.
+CLICKHOUSE_CMD := docker compose exec clickhouse clickhouse-client --user clickhouse --password clickhouse
+
+ifdef q
+clickhouse:
+	@$(CLICKHOUSE_CMD) -q "$(q)" --format Pretty
+else
+clickhouse:
+	@$(CLICKHOUSE_CMD)
 endif

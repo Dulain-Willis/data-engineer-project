@@ -1,52 +1,48 @@
-{# Splits comma-separated developer field into individual deduplicated rows. #}
-{# Preserves business-name suffixes (LLC, Inc., Ltd., Co., Corp.) by using  #}
-{# a sentinel string to protect commas before known suffixes.              #}
-
-with games as (
-    select
+with developers as (
+    select distinct
         developer,
         partition_date
-    from {{ ref('stg_steamspy__games') }}
-    where developer is not null and developer != ''
+    from {{ ref('int_games_developers_exploded') }}
 ),
 
-developers_suffixes_protected as (
+developer_games as (
+    select * from {{ ref('int_games_developers_exploded') }}
+),
+
+developer_game_metrics as (
     select
-        replaceRegexpAll(
-            replaceRegexpAll(
-                ifNull(games.developer, ''),
-                ',\\s*(co\\.,\\s*ltd\\.?)',
-                '|||\\1'
+        developer_games.developer,
+        developer_games.partition_date,
+        count(distinct developer_games.app_id) as num_games,
+        sum(developer_games.positive + developer_games.negative) as total_reviews,
+        sum(developer_games.positive) as total_positive,
+        sum(developer_games.negative) as total_negative,
+        round(
+            if(
+                sum(developer_games.positive + developer_games.negative) > 0,
+                sum(developer_games.positive)
+                / sum(developer_games.positive + developer_games.negative) * 100,
+                0
             ),
-            ',\\s*(llc\\.?|inc\\.?|ltd\\.?|l\\.l\\.c\\.?|co\\.|corp\\.?)',
-            '|||\\1'
-        ) as protected_str,
-        games.partition_date
-    from games
+            1
+        ) as avg_approval_pct
+    from developer_games
+    group by 1, 2
 ),
 
-developers_exploded as (
+developers_with_game_metrics as (
     select
-        trim(
-            replaceAll(dev_raw, '|||', ', ')
-        ) as developer,
-        developers_suffixes_protected.partition_date
-    from developers_suffixes_protected
-    array join splitByChar(
-        ',', developers_suffixes_protected.protected_str
-    ) as dev_raw
-),
-
-developers_deduped as (
-    select distinct
-        developers_exploded.developer,
-        developers_exploded.partition_date
-    from developers_exploded
-    where developers_exploded.developer != ''
+        developers.developer,
+        developer_game_metrics.num_games,
+        developer_game_metrics.total_reviews,
+        developer_game_metrics.total_positive,
+        developer_game_metrics.total_negative,
+        developer_game_metrics.avg_approval_pct,
+        developers.partition_date
+    from developers
+    left join developer_game_metrics
+        on developers.developer = developer_game_metrics.developer
+        and developers.partition_date = developer_game_metrics.partition_date
 )
 
-select
-    rowNumberInAllBlocks() as developer_id,
-    developers_deduped.developer,
-    developers_deduped.partition_date
-from developers_deduped
+select * from developers_with_game_metrics

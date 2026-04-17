@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: int_games_developers_exploded
+    description: >
+      Explodes the comma-separated developer field from stg_steamspy__games
+      into one row per app per developer. Preserves business-name suffixes
+      (LLC, Inc., Ltd., Co., Corp.) and carries game-level review metrics
+      through for downstream aggregation.
+    columns:
+      - name: app_id
+        description: Steam application ID.
+
+      - name: developer
+        description: Individual developer name, trimmed and deduplicated.
+
+      - name: positive
+        description: Count of positive user reviews for this game.
+
+      - name: negative
+        description: Count of negative user reviews for this game.
+
+      - name: partition_date
+        description: Partition date inherited from the source staging table.
+
+  - name: int_games_publishers_exploded
+    description: >
+      Explodes the comma-separated publisher field from stg_steamspy__games
+      into one row per app per publisher. Preserves business-name suffixes
+      (LLC, Inc., Ltd., Co., Corp.) and carries game-level review metrics
+      through for downstream aggregation.
+    columns:
+      - name: app_id
+        description: Steam application ID.
+
+      - name: publisher
+        description: Individual publisher name, trimmed and deduplicated.
+
+      - name: positive
+        description: Count of positive user reviews for this game.
+
+      - name: negative
+        description: Count of negative user reviews for this game.
+
+      - name: partition_date
+        description: Partition date inherited from the source staging table.

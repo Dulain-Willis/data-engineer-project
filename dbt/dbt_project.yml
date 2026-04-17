@@ -18,5 +18,9 @@ models:
   steam_pipeline:
     staging:
       +materialized: view
+    intermediate:
+      +materialized: ephemeral
     marts:
+      +materialized: table
+    metrics:
       +materialized: table

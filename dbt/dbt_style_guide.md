@@ -402,6 +402,16 @@ Always `table` or `incremental`. Marts are queried by end users; they must be pr
 - **Do not** use semantic rollups (e.g., `orders_per_day`) in marts — those are metrics
 - When referencing another mart in a mart, be intentional about grain changes
 
+Marts contain all useful data about a particular entity at a granular level. Bringing in data from other entities and concepts (e.g. aggregating `order` data onto a `customer` mart) is expected — the key constraint is that the core grain of the mart stays fixed. When grouping entities along a date spine or into rollups like `user_orders_per_day`, you are moving past marts into metrics.
+
+### 4.5.1 Building on Separate Marts
+
+While the DAG should narrow up to the marts layer, marts may reference other marts. A common example is aggregating data from one mart (e.g. `orders`) into another (e.g. `customers`) at a different grain. Since marts are already materialised, leveraging previously built resources saves compute versus recomputing the same views and CTEs from scratch. Using a mart in building another mart is acceptable but requires careful consideration to avoid wasted resources or circular dependencies.
+
+### 4.5.2 Troubleshooting via Tables
+
+Stacking views and ephemeral models until the marts layer is ideal in production but can make debugging difficult — errors may surface in later models when they actually originate from earlier dependencies. Temporarily materialising a specific chain of models as tables causes the warehouse to throw errors at the correct DAG node.
+
 ### 4.6 Semantic Layer Note
 
 - **Without Semantic Layer** → embrace aggressive denormalization
@@ -861,6 +871,10 @@ Use this table when deciding how to handle a specific scenario.
 | SQL indentation | 4 spaces |
 | Jinja delimiter spacing | Always space inside: `{{ x }}` not `{{x}}` |
 | Config applies to whole directory | Put in `dbt_project.yml`, not per-model config blocks |
+| Aggregation inside a mart | Allowed in internal CTEs as long as the final grain stays fixed on the entity |
+| One mart references another mart | Acceptable — leverage previously built resources instead of recomputing |
+| Grouping entities into rollups or date spines | Moving past marts into metrics — does not belong in a mart |
+| Debugging errors in ephemeral/view chains | Temporarily materialise the chain as tables to surface errors at the correct node |
 
 ---
 
