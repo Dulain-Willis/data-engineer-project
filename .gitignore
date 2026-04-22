@@ -27,3 +27,5 @@ terraform.tfstate.backup
 
 .dbt_venv/
 .nb_venv/
+
+for_later.md
